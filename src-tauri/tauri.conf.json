@@ -1,20 +1,20 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauri-angular-app",
+  "productName": "my-workflow-app",
   "version": "0.1.0",
-  "identifier": "com.tauri-angular-app.app",
+  "identifier": "com.my-workflow-app.app",
   "build": {
     "beforeDevCommand": "npm run start",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist/tauri-angular-app/browser"
+    "frontendDist": "../dist/my-workflows/browser"
   },
   "app": {
     "windows": [
       {
-        "title": "tauri-angular-app",
-        "width": 800,
-        "height": 600
+        "title": "My workflows",
+        "width": 0,
+        "height": 0
       }
     ],
     "security": {

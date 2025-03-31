@@ -1,5 +1,5 @@
 [package]
-name = "tauri-angular-app"
+name = "my-workflows"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
@@ -18,9 +18,15 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon", "image-ico"] }
+tauri = { version = "2", features = ["tray-icon", "image-ico", "image-png"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 open = "5.3.2"
+log = "0.4.26"
+thiserror = "2.0.12"
+tauri-plugin-process = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+time = "0.3.37"
 

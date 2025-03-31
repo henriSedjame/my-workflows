@@ -1,5 +1,5 @@
-use tauri::Manager;
 use tauri::tray::{MouseButtonState, TrayIcon, TrayIconEvent};
+use tauri::Manager;
 
 fn handle_icon_click(tray: &TrayIcon, event: TrayIconEvent) {
     let main_view = tray.app_handle().get_webview_window("main").unwrap();

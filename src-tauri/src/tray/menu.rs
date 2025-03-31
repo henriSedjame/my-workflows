@@ -1,62 +1,73 @@
-
 use tauri::menu::{Menu, PredefinedMenuItem};
 use tauri::{AppHandle, Wry};
 
 use crate::tray::menu::menu_items::*;
 
-
 pub mod menu_items {
+    use crate::models::state::AppState;
     use std::fmt::Display;
-    use tauri::{AppHandle, Wry};
     use tauri::image::Image;
     use tauri::menu::{IconMenuItem, MenuId, MenuItem, Submenu, SubmenuBuilder};
-    use crate::tray::menu::accelerators::{Accelerator, Keys};
+    use tauri::{AppHandle, Error, Manager, Wry};
+    use crate::utils::config::get_config_icons_path;
 
     mod id_values {
         pub const QUIT: &str = "Quit";
+
+        pub const CONFIG: &str = "Config";
+
+        pub const RELOAD: &str = "Reload";
+
         pub const NAVIGATIONS: &str = "Navigations";
         
-        pub const OPEN_JIRA: &str = "OpenJira";
-        
-        pub const OPEN_AWS: &str = "OpenAWS";
+        pub const COMMANDS: &str = "Commands";
 
-        pub const OPEN_GITLAB: &str = "OpenGitlab";
+        pub const OPEN: &str = "Open_";
+        pub const CMD: &str = "Cmd_";
+
+        pub const SEPARATOR: &str = "||";
     }
-    
+
     mod texts {
         pub const QUIT: &str = " Close ";
-        pub const NAVIGATIONS: &str = " Navigations ";
-        
-        pub const OPEN_JIRA: &str = " Open Jira ";
-        
-        pub const OPEN_AWS: &str = " Open AWS ";
 
-        pub const OPEN_GITLAB: &str = " Open Gitlab ";
+        pub const CONFIG: &str = "Open configuration";
+
+        pub const RELOAD: &str = "Reload app";
+
+        pub const NAVIGATIONS: &str = "Navigate to ... ";
+        
+        pub const COMMANDS: &str = "Execute cmd ...";
+       
     }
 
-    mod urls {
-        pub const JIRA: &str = "https://jira.vsct.fr/secure/RapidBoard.jspa?rapidView=4463&quickFilter=23849#";
-        pub const AWS: &str = "http://aws_login";
-        pub const GITLAB: &str = "https://gitlab.socrate.vsct.fr/invictus/invictus-root";
-    }
-
+    #[derive(PartialOrd, PartialEq)]
     pub enum MenuItemIds {
         Quit,
+        Config,
+        Reload,
         Navigations,
-        Open {
-            id: &'static str,
-            url: &'static str,
-        }
+        Commands,
+        Open { id: String, url: String },
+        Cmd { id: String, cmd: String },
     }
 
     impl Display for MenuItemIds {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            let label = match self {
-                MenuItemIds::Quit => id_values::QUIT,
-                MenuItemIds::Navigations => id_values::NAVIGATIONS,
-                MenuItemIds::Open{ id, url: _} => id
+            match self {
+                MenuItemIds::Quit => write!(f, "{}", id_values::QUIT)?,
+                MenuItemIds::Config => write!(f, "{}", id_values::CONFIG)?,
+                MenuItemIds::Reload => write!(f, "{}", id_values::RELOAD)?,
+                MenuItemIds::Navigations => write!(f, "{}", id_values::NAVIGATIONS)?,
+                MenuItemIds::Commands => write!(f, "{}", id_values::COMMANDS)?,
+                MenuItemIds::Open { id, url } => {
+                    write!(f, "{}{}{}", id, id_values::SEPARATOR, url)?
+                },
+                MenuItemIds::Cmd { id, cmd } => {
+                    write!(f, "{}{}{}", id, id_values::SEPARATOR, cmd)?
+                }
             };
-            write!(f, "{}", label)?;
+
             Ok(())
         }
     }
@@ -65,60 +76,169 @@ pub mod menu_items {
         fn from(id: MenuId) -> Self {
             match id.0.as_str() {
                 id_values::QUIT => MenuItemIds::Quit,
+                id_values::CONFIG => MenuItemIds::Config,
+                id_values::RELOAD => MenuItemIds::Reload,
                 id_values::NAVIGATIONS => MenuItemIds::Navigations,
-                id_values::OPEN_JIRA => MenuItemIds::from(id_values::OPEN_JIRA),
-                id_values::OPEN_AWS =>  MenuItemIds::from(id_values::OPEN_AWS),
-                id_values::OPEN_GITLAB => MenuItemIds::from(id_values::OPEN_GITLAB),
-                _ => panic!("MenuItemIds::Quit is not a valid menu id"),
+                id_values::COMMANDS => MenuItemIds::Commands,
+                id => {
+                    if id.starts_with(id_values::OPEN) {
+                        let parts: Vec<&str> = id.split(id_values::SEPARATOR).collect();
+                        let open_id = parts.get(0).unwrap().to_string();
+                        let open_url = parts.get(1).unwrap().to_string();
+                        MenuItemIds::Open {
+                            id: open_id.replace(id_values::OPEN, ""),
+                            url: open_url,
+                        }
+                    } else if id.starts_with(id_values::CMD) {
+                        let parts: Vec<&str> = id.split(id_values::SEPARATOR).collect();
+                        let cmd_id = parts.get(0).unwrap().to_string();
+                        let cmd = parts.get(1).unwrap().to_string();
+                        MenuItemIds::Cmd {
+                            id: cmd_id.replace(id_values::CMD, ""),
+                            cmd
+                        }
+                    }
+                    else {
+                        panic!("Invalid menu item id")
+                    }
+                }
             }
         }
     }
 
-    impl From<&str> for MenuItemIds {
-        fn from(value: &str) -> Self {
-            match value {
-                id_values::OPEN_JIRA => MenuItemIds::Open {
-                    id : id_values::OPEN_JIRA,
-                    url : urls::JIRA,
-                },
-                id_values::OPEN_AWS => MenuItemIds::Open {
-                    id : id_values::OPEN_AWS,
-                    url : urls::AWS,
-                },
-                id_values::OPEN_GITLAB => MenuItemIds::Open {
-                    id : id_values::OPEN_GITLAB,
-                    url : urls::GITLAB,
-                },
-                _ => panic!("")
-            }
-        }
-    }
-    
     pub fn quit(app: &AppHandle) -> tauri::Result<MenuItem<Wry>> {
         MenuItem::with_id(app, MenuItemIds::Quit, texts::QUIT, true, None::<&str>)
     }
 
-    pub fn workflows(app: &AppHandle) ->  tauri::Result<Submenu<Wry>> {
-        let sb = SubmenuBuilder::with_id(app, MenuItemIds::Navigations, texts::NAVIGATIONS).build()?;
-        sb.append_items(&[
-            &workflow_item(app, id_values::OPEN_JIRA, texts::OPEN_JIRA, include_bytes!("../../icons/jira.png"), vec![Keys::CMD, Keys::J])?,
-            &workflow_item(app, id_values::OPEN_AWS, texts::OPEN_AWS, include_bytes!("../../icons/aws.png"), vec![Keys::CMD, Keys::A])?,
-            &workflow_item(app, id_values::OPEN_GITLAB, texts::OPEN_GITLAB, include_bytes!("../../icons/gitlab.png"), vec![Keys::CMD, Keys::G])?,
-        ])?;
-        
+    pub fn config(app: &AppHandle) -> tauri::Result<IconMenuItem<Wry>> {
+        let icon = Image::from_bytes(include_bytes!("../../icons/config.png")).ok();
+        IconMenuItem::with_id(
+            app,
+            MenuItemIds::Config,
+            texts::CONFIG,
+            true,
+            icon,
+            None::<&str>,
+        )
+    }
+
+    pub fn reload(app: &AppHandle) -> tauri::Result<IconMenuItem<Wry>> {
+        let icon = Image::from_bytes(include_bytes!("../../icons/reload.png")).ok();
+        IconMenuItem::with_id(
+            app,
+            MenuItemIds::Reload,
+            texts::RELOAD,
+            true,
+            icon,
+            None::<&str>,
+        )
+    }
+
+    pub fn navigations(app: &AppHandle) -> tauri::Result<Submenu<Wry>> {
+        let sb =
+            SubmenuBuilder::with_id(app, MenuItemIds::Navigations, texts::NAVIGATIONS).build()?;
+        let state = app.state::<AppState>();
+
+        state
+            .config
+            .navigations
+            .clone()
+            .into_iter()
+            .for_each(|nav| {
+                let name = nav.name;
+                let url = nav.url;
+                match nav.icon {
+                    None => {
+                        if let Ok(item) = navigation_item(app, name, url) {
+                            sb.append(&item).expect("");
+                        }
+                    }
+                    Some(icon) => {
+                        
+                        let path = get_config_icons_path(icon).unwrap();
+                        if let Ok(item) = navigation_icon_item(app, name, url, path.clone()) {
+                            sb.append(&item).expect("Failed to add");
+                        }
+                    }
+                }
+            });
+
         Ok(sb)
     }
 
-    fn workflow_item(app: &AppHandle, id: &'static str, text: &'static str, img: &[u8], accelerator_keys: Vec<Keys>) -> tauri::Result<IconMenuItem<Wry>> {
-        let icon = Image::from_bytes(img).ok();
-        IconMenuItem::with_id(app,
-                              MenuItemIds::from(id),
-                              text,
-                              true,
-                              icon,
-                              Accelerator::of(accelerator_keys).build())
+    fn navigation_item(app: &AppHandle, name: String, url: String) -> tauri::Result<MenuItem<Wry>> {
+        MenuItem::with_id(
+            app,
+            MenuItemIds::Open {
+                id: format!("{}{}", id_values::OPEN, name.clone()),
+                url,
+            },
+            name.clone().as_str().to_uppercase(),
+            true,
+            None::<&str>,
+        )
     }
 
+    fn navigation_icon_item(
+        app: &AppHandle,
+        name: String,
+        url: String,
+        icon_path: String,
+    ) -> tauri::Result<IconMenuItem<Wry>> {
+        match std::fs::read(icon_path.clone()) {
+            Ok(icon) => IconMenuItem::with_id(
+                app,
+                MenuItemIds::Open {
+                    id: format!("{}{}", id_values::OPEN, name.clone()),
+                    url,
+                },
+                name.clone().as_str().to_uppercase(),
+                true,
+                Some(Image::from_bytes(&icon)?),
+                None::<&str>,
+            ),
+            Err(e) => {
+                todo!("show message");
+                Err(Error::UnknownPath)
+            }
+        }
+    }
+
+    pub fn commands(app: &AppHandle) -> tauri::Result<Submenu<Wry>> {
+        let sb =
+            SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS).build()?;
+        let state = app.state::<AppState>();
+
+        state
+            .config
+            .commands
+            .clone()
+            .into_iter()
+            .for_each(|command| {
+                let name = command.name;
+                let cmd = command.cmd;
+                if let Ok(item) = command_item(app, name, cmd) {
+                        sb.append(&item).expect("");
+                }
+                
+            });
+
+        Ok(sb)
+    }
+    fn command_item(app: &AppHandle, name: String, cmd: String) -> tauri::Result<IconMenuItem<Wry>> {
+        let icon = Image::from_bytes(include_bytes!("../../icons/cmd.png")).ok();
+        IconMenuItem::with_id(
+            app,
+            MenuItemIds::Cmd {
+                id: format!("{}{}", id_values::CMD, name.clone()),
+                cmd,
+            },
+            format!("{}",  name.clone()),
+            true,
+            icon,
+            None::<&str>,
+        )
+    }
 }
 
 pub mod accelerators {
@@ -128,7 +248,7 @@ pub mod accelerators {
         CTRL,
         J,
         A,
-        G
+        G,
     }
 
     impl From<Keys> for String {
@@ -146,7 +266,6 @@ pub mod accelerators {
     pub struct Accelerator(Vec<Keys>);
 
     impl Accelerator {
-
         pub(crate) fn of(keys: Vec<Keys>) -> Self {
             Accelerator(keys)
         }
@@ -158,18 +277,25 @@ pub mod accelerators {
 
     impl From<Accelerator> for String {
         fn from(value: Accelerator) -> String {
-            let v : Vec<String> = value.0.into_iter().map( move |k| String::from(k)).collect();
+            let v: Vec<String> = value.0.into_iter().map(move |k| String::from(k)).collect();
             v.join("+")
         }
     }
 }
 
 pub fn create_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
-
-    Menu::with_items(app, &[
-        &workflows(app)?,
-        &PredefinedMenuItem::separator(app)?,
-        &quit(app)?,
-    ])
+    Menu::with_items(
+        app,
+        &[
+            &navigations(app)?,
+            &PredefinedMenuItem::separator(app)?,
+            &commands(app)?,
+            &PredefinedMenuItem::separator(app)?,
+            &config(app)?,
+            &PredefinedMenuItem::separator(app)?,
+            &reload(app)?,
+            &PredefinedMenuItem::separator(app)?,
+            &quit(app)?,
+        ],
+    )
 }
-

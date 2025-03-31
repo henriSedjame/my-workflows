@@ -6,7 +6,7 @@
     "analytics": false
   },
   "projects": {
-    "tauri-angular-app": {
+    "my-workflows": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -15,7 +15,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/tauri-angular-app",
+            "outputPath": "dist/my-workflows",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -53,10 +53,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "tauri-angular-app:build:production"
+              "buildTarget": "my-workflows:build:production"
             },
             "development": {
-              "buildTarget": "tauri-angular-app:build:development"
+              "buildTarget": "my-workflows:build:development"
             }
           },
           "defaultConfiguration": "development"
