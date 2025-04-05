@@ -1,17 +1,16 @@
-use tauri::{AppHandle, Manager};
 use crate::commands::{execute_and_get, ENV_PREFIX, VARS_PREFIX};
 use crate::models::errors::AppErrors;
 use crate::models::state::AppState;
+use tauri::{AppHandle, Manager};
 
 pub fn evaluate_cmd_value(app: &AppHandle, cmd: String) -> Result<String, AppErrors> {
-
     let mut result = String::new();
 
     for cmd in cmd.trim().split(' ') {
         if cmd.starts_with(ENV_PREFIX) {
             let env_name = cmd.replace(ENV_PREFIX, "");
             let cmd = format!("echo ${}", env_name);
-            if let Some(s) = execute_and_get(cmd.as_str(), ||{}) {
+            if let Some(s) = execute_and_get(cmd.as_str(), || {}) {
                 println!("ENV => {}", s);
                 result = result + " " + &s;
             } else {

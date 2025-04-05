@@ -5,11 +5,11 @@ use crate::tray::menu::menu_items::*;
 
 pub mod menu_items {
     use crate::models::state::AppState;
+    use crate::utils::config::get_config_icons_path;
     use std::fmt::Display;
     use tauri::image::Image;
     use tauri::menu::{IconMenuItem, MenuId, MenuItem, Submenu, SubmenuBuilder};
     use tauri::{AppHandle, Error, Manager, Wry};
-    use crate::utils::config::get_config_icons_path;
 
     mod id_values {
         pub const QUIT: &str = "Quit";
@@ -19,7 +19,7 @@ pub mod menu_items {
         pub const RELOAD: &str = "Reload";
 
         pub const NAVIGATIONS: &str = "Navigations";
-        
+
         pub const COMMANDS: &str = "Commands";
 
         pub const OPEN: &str = "Open_";
@@ -36,9 +36,8 @@ pub mod menu_items {
         pub const RELOAD: &str = "Reload app";
 
         pub const NAVIGATIONS: &str = "Navigate to ... ";
-        
+
         pub const COMMANDS: &str = "Execute cmd ...";
-       
     }
 
     #[derive(PartialOrd, PartialEq)]
@@ -62,10 +61,8 @@ pub mod menu_items {
                 MenuItemIds::Commands => write!(f, "{}", id_values::COMMANDS)?,
                 MenuItemIds::Open { id, url } => {
                     write!(f, "{}{}{}", id, id_values::SEPARATOR, url)?
-                },
-                MenuItemIds::Cmd { id, cmd } => {
-                    write!(f, "{}{}{}", id, id_values::SEPARATOR, cmd)?
                 }
+                MenuItemIds::Cmd { id, cmd } => write!(f, "{}{}{}", id, id_values::SEPARATOR, cmd)?,
             };
 
             Ok(())
@@ -95,10 +92,9 @@ pub mod menu_items {
                         let cmd = parts.get(1).unwrap().to_string();
                         MenuItemIds::Cmd {
                             id: cmd_id.replace(id_values::CMD, ""),
-                            cmd
+                            cmd,
                         }
-                    }
-                    else {
+                    } else {
                         panic!("Invalid menu item id")
                     }
                 }
@@ -154,7 +150,6 @@ pub mod menu_items {
                         }
                     }
                     Some(icon) => {
-                        
                         let path = get_config_icons_path(icon).unwrap();
                         if let Ok(item) = navigation_icon_item(app, name, url, path.clone()) {
                             sb.append(&item).expect("Failed to add");
@@ -205,8 +200,7 @@ pub mod menu_items {
     }
 
     pub fn commands(app: &AppHandle) -> tauri::Result<Submenu<Wry>> {
-        let sb =
-            SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS).build()?;
+        let sb = SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS).build()?;
         let state = app.state::<AppState>();
 
         state
@@ -218,14 +212,17 @@ pub mod menu_items {
                 let name = command.name;
                 let cmd = command.cmd;
                 if let Ok(item) = command_item(app, name, cmd) {
-                        sb.append(&item).expect("");
+                    sb.append(&item).expect("");
                 }
-                
             });
 
         Ok(sb)
     }
-    fn command_item(app: &AppHandle, name: String, cmd: String) -> tauri::Result<IconMenuItem<Wry>> {
+    fn command_item(
+        app: &AppHandle,
+        name: String,
+        cmd: String,
+    ) -> tauri::Result<IconMenuItem<Wry>> {
         let icon = Image::from_bytes(include_bytes!("../../icons/cmd.png")).ok();
         IconMenuItem::with_id(
             app,
@@ -233,7 +230,7 @@ pub mod menu_items {
                 id: format!("{}{}", id_values::CMD, name.clone()),
                 cmd,
             },
-            format!("{}",  name.clone()),
+            format!("{}", name.clone()),
             true,
             icon,
             None::<&str>,

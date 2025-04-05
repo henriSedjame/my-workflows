@@ -12,7 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "My workflows",
+        "backgroundColor" : "#1f2023",
+        "title": "",
+        "titleBarStyle": "Overlay",
         "width": 0,
         "height": 0
       }

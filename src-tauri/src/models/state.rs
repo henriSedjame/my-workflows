@@ -14,9 +14,7 @@ impl AppState {
         let config_str = fs::read_to_string(config_path.as_str())?;
 
         match serde_json::from_str::<AppConfig>(config_str.as_str()) {
-            Ok(config) => {
-                Ok(AppState { config })
-            }
+            Ok(config) => Ok(AppState { config }),
             Err(e) => {
                 println!("Config JSON => {}", e);
                 Err(AppErrors::FailedToParseConfig(e))

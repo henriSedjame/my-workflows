@@ -1,7 +1,7 @@
-use std::fs;
-use std::process::Command;
 use crate::models::errors::AppErrors;
 use crate::models::{CONFIG_FILE_NAME, ICONS_DIR, WF_APP_DIR};
+use std::fs;
+use std::process::Command;
 
 /// Get value of $HOME environment variable
 pub fn get_home_dir() -> Result<String, AppErrors> {

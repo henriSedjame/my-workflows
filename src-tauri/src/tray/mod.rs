@@ -1,12 +1,12 @@
-use std::fmt::format;
 use crate::commands::{execute, execute_and_handle};
 use crate::tray::menu::{create_menu, menu_items::MenuItemIds};
+use crate::utils::cmd::evaluate_cmd_value;
 use crate::utils::config::get_config_path;
+use std::fmt::format;
 use tauri::image::Image;
 use tauri::tray::{TrayIcon, TrayIconBuilder};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-use crate::utils::cmd::evaluate_cmd_value;
 
 mod handlers;
 pub(crate) mod menu;
@@ -27,46 +27,45 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
                 if let Ok(path) = get_config_path() {
                     let cmd = format!("open {}", path);
                     let cmd = cmd.as_str();
-                    
+
                     execute(cmd, || {
                         app.dialog()
                             .message("Failed to open configuration file")
                             .title("⚙️OPEN CONFIGURATION")
                             .kind(MessageDialogKind::Error)
                             .blocking_show();
-                    }).expect("");
+                    })
+                    .expect("");
                 };
             }
             MenuItemIds::Reload => app.restart(),
             MenuItemIds::Navigations => {}
             MenuItemIds::Open { id: _, url } => open::that(url).unwrap(),
             MenuItemIds::Commands => {}
-            MenuItemIds::Cmd { id, cmd } => {
-                match evaluate_cmd_value(app, cmd) { 
-                    Ok(cmd) => {
-                        execute_and_handle(
-                            cmd.as_str(),
-                            |output|{
-                                let result = String::from_utf8(output.stdout).unwrap();
-                                app.dialog()
-                                    .message(result.as_str())
-                                    .title(format!("# {}", id).as_str().to_uppercase())
-                                    .kind(MessageDialogKind::Info)
-                                    .blocking_show();
-                            },
-                            ||{}
-                        ).unwrap();
-                    }
-                    Err(e) => {
-                        app.dialog()
-                            .message(format!("{}", e))
-                            .title(format!("# {}", id).as_str().to_uppercase())
-                            .kind(MessageDialogKind::Error)
-                            .blocking_show();
-                    }
+            MenuItemIds::Cmd { id, cmd } => match evaluate_cmd_value(app, cmd) {
+                Ok(cmd) => {
+                    execute_and_handle(
+                        cmd.as_str(),
+                        |output| {
+                            let result = String::from_utf8(output.stdout).unwrap();
+                            app.dialog()
+                                .message(result.as_str())
+                                .title(format!("# {}", id).as_str().to_uppercase())
+                                .kind(MessageDialogKind::Info)
+                                .blocking_show();
+                        },
+                        || {},
+                    )
+                    .unwrap();
                 }
-                
-            }
+                Err(e) => {
+                    app.dialog()
+                        .message(format!("{}", e))
+                        .title(format!("# {}", id).as_str().to_uppercase())
+                        .kind(MessageDialogKind::Error)
+                        .blocking_show();
+                }
+            },
         })
         .build(app)
 }
