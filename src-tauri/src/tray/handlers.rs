@@ -1,10 +1,13 @@
-use tauri::tray::{MouseButtonState, TrayIcon, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconEvent};
 use tauri::Manager;
 
-fn handle_icon_click(tray: &TrayIcon, event: TrayIconEvent) {
+pub fn handle_icon_click(tray: &TrayIcon, event: TrayIconEvent) {
+  
     let main_view = tray.app_handle().get_webview_window("main").unwrap();
-    if let TrayIconEvent::Click { button_state, .. } = event {
-        if button_state == MouseButtonState::Up {
+    println!("EVENT => {:?}", event);
+    if let TrayIconEvent::Click { button, button_state, .. } = event {
+        println!("Clicked on {:?}", event);
+        if button == MouseButton::Left {
             if main_view.is_visible().unwrap() {
                 main_view.hide().unwrap()
             } else {

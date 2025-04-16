@@ -14,4 +14,6 @@ pub enum AppErrors {
     EnvNotFound(String),
     #[error("Variable {0} not found")]
     VarNotFound(String),
+    #[error("{0}")]
+    EmitEventError(String)
 }

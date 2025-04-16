@@ -1,18 +1,15 @@
-use tauri::{AppHandle, Manager, PhysicalSize, TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
-use tauri::window::Color;
+use tauri::{AppHandle, Manager};
 
 pub(crate) mod cmd;
 pub(crate) mod config;
 
-pub fn reset_app_size(app: &AppHandle) {
-    app.get_webview_window("main")
-        .unwrap()
-        .set_size(PhysicalSize {
-            width: 1200,
-            height: 1200,
-        })
-        .expect("");
 
-    app.show().unwrap();
+pub fn show_main_view(app: &AppHandle) {
+    let window = app.get_webview_window("main").unwrap();
+    window.show().unwrap();
 }
 
+pub fn hide_main_view(app: &AppHandle) {
+    let window = app.get_webview_window("main").unwrap();
+    window.hide().unwrap();
+}

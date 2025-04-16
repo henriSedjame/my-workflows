@@ -11,7 +11,7 @@ pub mod menu_items {
     use tauri::menu::{IconMenuItem, MenuId, MenuItem, Submenu, SubmenuBuilder};
     use tauri::{AppHandle, Error, Manager, Wry};
 
-    mod id_values {
+    pub mod id_values {
         pub const QUIT: &str = "Quit";
 
         pub const CONFIG: &str = "Config";
@@ -39,7 +39,11 @@ pub mod menu_items {
 
         pub const COMMANDS: &str = "Execute cmd ...";
     }
-
+    
+    #[derive(PartialEq, PartialOrd)]
+    pub struct PrefixedId(String);
+    
+    
     #[derive(PartialOrd, PartialEq)]
     pub enum MenuItemIds {
         Quit,
@@ -51,6 +55,7 @@ pub mod menu_items {
         Cmd { id: String, cmd: String },
     }
 
+    
     impl Display for MenuItemIds {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
@@ -136,6 +141,8 @@ pub mod menu_items {
         let state = app.state::<AppState>();
 
         state
+            .lock()
+            .unwrap()
             .config
             .navigations
             .clone()
@@ -192,8 +199,7 @@ pub mod menu_items {
                 Some(Image::from_bytes(&icon)?),
                 None::<&str>,
             ),
-            Err(e) => {
-                todo!("show message");
+            Err(_e) => {
                 Err(Error::UnknownPath)
             }
         }
@@ -204,6 +210,8 @@ pub mod menu_items {
         let state = app.state::<AppState>();
 
         state
+            .lock()
+            .unwrap()
             .config
             .commands
             .clone()

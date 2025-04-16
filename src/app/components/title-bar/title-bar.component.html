@@ -1,0 +1,20 @@
+<div data-tauri-drag-region class="titlebar">
+
+    <div class="titlebar-button-container">
+        <!--<div class="titlebar-button" [ngClass]="activeBtnClass()" id="titlebar-close"
+        (click)="appWindow.hide()"></div>-->
+        <div class="titlebar-button"  [ngClass]="activeBtnClass()" id="titlebar-minimize"
+        (click)="appWindow.minimize()">
+            <span class="material-symbols-outlined icon">remove</span>
+        </div>
+        <!--<div class="titlebar-button"  [ngClass]="activeBtnClass()" id="titlebar-maximize"
+        (click)="appWindow.toggleMaximize()"></div>-->
+    </div>
+
+    <div class="tabs-container">
+        @for (tab of appStore.tabs(); track tab.id) {
+            <app-tab-header [tab]="tab"/>
+        }
+    </div>
+
+</div>

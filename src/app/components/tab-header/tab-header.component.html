@@ -1,0 +1,9 @@
+<div data-tauri-drag-region class="tab"
+     [ngClass]="activeTabClass()"
+     (click)="appStore.setCurrentTab(tab())"
+>
+    <span></span>
+    <span> ≻ {{tab().label}} </span>
+    <span class="material-symbols-outlined close-btn" (click)="closeTab($event)">close</span>
+</div>
+

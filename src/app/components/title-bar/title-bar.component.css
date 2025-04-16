@@ -1,0 +1,59 @@
+.titlebar {
+    height: var(--title-bar-height);
+    background: var(--title-bar-color);
+    user-select: none;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--app-thin-white);
+}
+
+.titlebar-button-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.titlebar-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(128, 128, 128, 0.4);
+    user-select: none;
+    -webkit-user-select: none;
+
+    .icon {
+        color: var(--bg-color);
+        scale: 0.7;
+        opacity: 0;
+        cursor: default;
+    }
+}
+
+.active {
+    background-color: var(--btn-yellow);
+}
+
+.active:hover {
+    .icon {
+        opacity: 1;
+    }
+}
+
+
+
+.tabs-container {
+    display: flex;
+    margin-left:10px;
+    overflow-x: scroll;
+    scrollbar-width: none;
+}

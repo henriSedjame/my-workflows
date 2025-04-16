@@ -1,12 +1,17 @@
-use crate::commands::{execute, execute_and_handle};
-use crate::tray::menu::{create_menu, menu_items::MenuItemIds};
-use crate::utils::cmd::evaluate_cmd_value;
+use crate::models::events::commands::CommandRequested;
+use crate::models::events::emit_event;
+use crate::tray::menu::{create_menu, menu_items::{id_values, MenuItemIds}};
+use crate::utils::cmd::{evaluate_cmd_value, execute_cmd};
 use crate::utils::config::get_config_path;
-use std::fmt::format;
+
 use tauri::image::Image;
+use tauri::menu::MenuEvent;
 use tauri::tray::{TrayIcon, TrayIconBuilder};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+use uuid::Uuid;
+use crate::tray::handlers::handle_icon_click;
+use crate::utils::show_main_view;
 
 mod handlers;
 pub(crate) mod menu;
@@ -19,53 +24,50 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
         .icon(icon)
         .icon_as_template(true)
         .menu(&create_menu(app)?)
-        .show_menu_on_left_click(true)
-        //.on_tray_icon_event(handle_icon_click)
-        .on_menu_event(|app, event| match event.id.into() {
-            MenuItemIds::Quit => app.hide_menu().unwrap(),
-            MenuItemIds::Config => {
-                if let Ok(path) = get_config_path() {
-                    let cmd = format!("open {}", path);
-                    let cmd = cmd.as_str();
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(handle_icon_click)
+        .on_menu_event(|app, event: MenuEvent| {
+            let id : MenuItemIds = event.id.into();
+            match id {
+                MenuItemIds::Quit => app.hide_menu().unwrap(),
+                MenuItemIds::Config => {
+                    if let Ok(path) = get_config_path() {
+                        let cmd = format!("open {}", path);
+                        let cmd = cmd.as_str();
 
-                    execute(cmd, || {
+                        execute_cmd(cmd, |_|{}, || {
+                            app.dialog()
+                                .message("Failed to open configuration file")
+                                .title("⚙️OPEN CONFIGURATION")
+                                .kind(MessageDialogKind::Error)
+                                .blocking_show();
+                        });
+                    };
+                }
+                MenuItemIds::Reload => app.restart(),
+                MenuItemIds::Navigations => {}
+                MenuItemIds::Open { id: _, url } => open::that(url).unwrap(),
+                MenuItemIds::Commands => {}
+                MenuItemIds::Cmd { id, cmd } => match evaluate_cmd_value(app, cmd) {
+                    Ok(cmd) => {
+                        
+                        show_main_view(app);
+                        
+                        emit_event(app, CommandRequested {
+                            command_id: Uuid::new_v4(),
+                            command_label: id.replace(id_values::CMD, "").as_str(),
+                            command_value: cmd.as_str()
+                        }).unwrap();
+                    }
+                    Err(e) => {
                         app.dialog()
-                            .message("Failed to open configuration file")
-                            .title("⚙️OPEN CONFIGURATION")
+                            .message(format!("{}", e))
+                            .title(format!("# {}", id).as_str().to_uppercase())
                             .kind(MessageDialogKind::Error)
                             .blocking_show();
-                    })
-                    .expect("");
-                };
+                    }
+                },
             }
-            MenuItemIds::Reload => app.restart(),
-            MenuItemIds::Navigations => {}
-            MenuItemIds::Open { id: _, url } => open::that(url).unwrap(),
-            MenuItemIds::Commands => {}
-            MenuItemIds::Cmd { id, cmd } => match evaluate_cmd_value(app, cmd) {
-                Ok(cmd) => {
-                    execute_and_handle(
-                        cmd.as_str(),
-                        |output| {
-                            let result = String::from_utf8(output.stdout).unwrap();
-                            app.dialog()
-                                .message(result.as_str())
-                                .title(format!("# {}", id).as_str().to_uppercase())
-                                .kind(MessageDialogKind::Info)
-                                .blocking_show();
-                        },
-                        || {},
-                    )
-                    .unwrap();
-                }
-                Err(e) => {
-                    app.dialog()
-                        .message(format!("{}", e))
-                        .title(format!("# {}", id).as_str().to_uppercase())
-                        .kind(MessageDialogKind::Error)
-                        .blocking_show();
-                }
-            },
         })
         .build(app)
 }

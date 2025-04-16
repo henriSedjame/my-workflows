@@ -1,0 +1,18 @@
+@if (appStore.killProcDialogOpened()) {
+    <div class="dialog-container">
+        <dialog>
+            <span class="material-symbols-outlined warning-icon">warning</span>
+            <div class="messages">
+                <div> Voulez-vous vraiment arrêter le processus en cours ?</div>
+            </div>
+
+            <div class="buttons">
+                <button class="cancel-button" (click)="cancel()"> Annuler </button>
+                <button class="ok-button" (click)="confirm()"> Arrêter </button>
+            </div>
+        </dialog>
+    </div>
+
+}
+
+

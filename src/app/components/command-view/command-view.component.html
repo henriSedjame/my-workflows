@@ -1,0 +1,61 @@
+@if (command()) {
+    <div class="command-container">
+
+        <div class="command-script">
+            <span class="tilde"> ~ </span>
+            <span>{{command()?.value}}</span>
+            @if (duration()) {
+                <span class="duration"> ( {{duration()}} seconds )</span>
+            }
+        </div>
+
+        <div class="command-result" #command_result >
+            @if (lines().length > 0) {
+                <div class="command-lines" [ngClass]="commandClass()">
+                    @for (line of lines(); track $index) {
+                        <span class="command-line">{{line}}</span>
+                    }
+                </div>
+            }
+            @if (errorLines().length > 0) {
+                <div class="command-lines errors">
+                    @for (line of errorLines(); track $index) {
+                        <span class="command-line">{{line}}</span>
+                    }
+                </div>
+            }
+
+        </div>
+
+        @if (isRunning()) {
+            <div class="kill-instructions">
+                <span class="msg"> Kill Process  </span>
+                <span class="btn">
+                    <span class="material-symbols-outlined cmd-key">keyboard_control_key</span>
+                </span>
+
+                <span class="k-letter btn">C</span>
+            </div>
+            <div class="loader"></div>
+        } @else {
+            <div class="bottom-spaced"></div>
+        }
+
+
+
+
+    </div>
+
+
+} @else {
+    <div class="empty-command">
+        <div class="empty-message">
+            <span class="material-symbols-outlined not-found-icon"> search_off</span>
+            <span class="not-found-msg">No running command ...</span>
+        </div>
+        <div class="commands-palette">
+
+        </div>
+
+    </div>
+}

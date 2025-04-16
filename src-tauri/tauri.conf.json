@@ -10,13 +10,18 @@
     "frontendDist": "../dist/my-workflows/browser"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
-        "backgroundColor" : "#1f2023",
-        "title": "",
-        "titleBarStyle": "Overlay",
-        "width": 0,
-        "height": 0
+        "decorations": false,
+        "title": "MyWorkflowApp",
+        "width": 800,
+        "height": 800,
+        "resizable": false,
+        "backgroundColor": "#00000000",
+        "hiddenTitle": true,
+        "transparent": true,
+        "shadow": true
       }
     ],
     "security": {

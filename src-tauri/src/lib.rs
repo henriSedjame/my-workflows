@@ -3,17 +3,14 @@ mod models;
 mod tray;
 mod utils;
 
-use crate::models::state::AppState;
+use crate::models::state::AppStateInner;
+use crate::utils::hide_main_view;
+use commands::{execute_command, kill_command};
+use std::sync::Mutex;
 use tauri::Manager;
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-use crate::utils::{ reset_app_size};
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -34,18 +31,16 @@ pub fn run() {
 
             /* Hide app and dock icon */{
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-                //app.hide().unwrap();
             }
 
-
             let app_handle = app.handle();
-           
-            reset_app_size(app_handle);
+
+            hide_main_view(app_handle);
 
             /* Add initial state */ {
-                match AppState::new() {
-                    Ok(state) => {
-                        app.manage(state);
+                match AppStateInner::new() {
+                    Ok(inner) => {
+                        app.manage(Mutex::new(inner));
                         tray::create(app_handle)?;
                         Ok(())
                     }
@@ -62,7 +57,10 @@ pub fn run() {
 
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            execute_command,
+            kill_command
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

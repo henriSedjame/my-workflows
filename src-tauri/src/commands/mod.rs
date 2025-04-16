@@ -1,92 +1,111 @@
-use crate::models::errors::AppErrors;
-use std::io::{BufRead, BufReader};
-use std::process::{Command, Output, Stdio};
 
-pub const PROGRAM_NAME: &str = "sh";
+use crate::models::events::commands::{CommandExecutionEvent};
 
-pub const ENV_PREFIX: &str = "$env.";
-pub const VARS_PREFIX: &str = "$vars.";
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Command, Stdio};
+use std::time::Instant;
+use tauri::{AppHandle, Manager, State};
+use crate::models::events::commands::CommandExecutionEvent::{CommandStarted, CommandProgress, CommandFailed, CommandEnded};
+use crate::models::state::{AppState, RunningCommand};
+use sysinfo::{Pid, System};
+use time::error::Format::StdIo;
 
-pub fn execute_and_handle(
-    cmd: &str,
-    handler: impl Fn(Output),
-    on_error: impl Fn(),
-) -> Result<(), AppErrors> {
-    let output = tauri::async_runtime::block_on(async move {
-        Command::new(PROGRAM_NAME)
+#[tauri::command]
+pub async fn execute_command(command_id: String, command_value: String, channel: tauri::ipc::Channel<CommandExecutionEvent>, state: State<'_, AppState>)  -> tauri::Result<bool> {
+    
+    channel.send(CommandStarted)?;
+    
+    let start = Instant::now();
+    
+    let mut command = Command::new("sh")
             .arg("-c")
-            .arg(cmd)
-            .output()
-            .unwrap()
-    });
-
-    if output.status.success() {
-        handler(output);
-    } else {
-        on_error();
-    }
-
-    Ok(())
-}
-
-pub fn execute(cmd: &str, on_error: impl Fn()) -> Result<(), AppErrors> {
-    execute_and_handle(cmd, |_| {}, on_error)
-}
-
-pub fn execute_and_get(cmd: &str, on_error: impl Fn()) -> Option<String> {
-    let output = tauri::async_runtime::block_on(async move {
-        Command::new(PROGRAM_NAME)
-            .arg("-c")
-            .arg(cmd)
-            .output()
-            .unwrap()
-    });
-
-    if output.status.success() {
-        let value = String::from_utf8(output.stdout).unwrap();
-        if value.is_empty() {
-            None
-        } else {
-            Some(value)
-        }
-    } else {
-        on_error();
-        None
-    }
-}
-
-pub fn execute_and_stream_as_event(cmd: &str, on_error: impl Fn()) {
-    let mut cmd_child = tauri::async_runtime::block_on(async move {
-        Command::new(PROGRAM_NAME)
-            .arg("-c")
-            .arg(cmd)
+            .arg(command_value.as_str())
             .stdout(Stdio::piped())
+            
             .stderr(Stdio::piped())
-            .spawn()
-            .unwrap()
+            .spawn()?;
+
+
+    let mut state_lock = state.lock().unwrap();
+
+    state_lock.running_commands.push(RunningCommand {
+        command_id,
+        processs_id: command.id()
     });
 
-    /* handle output */
-    {
-        let stdout = cmd_child.stdout.as_mut().unwrap();
-        let stdout_reader = BufReader::new(stdout);
-        let stdout_lines = stdout_reader.lines();
+    tauri::async_runtime::spawn(async move {
+        /* handle output */
+        {
+            let stdout = command.stdout.as_mut().unwrap();
+            let stdout_reader = BufReader::new(stdout);
+            let stdout_lines = stdout_reader.lines();
 
-        for line in stdout_lines {
-            println!("Read: {:?}", line);
+            for line in stdout_lines.into_iter().flatten() {
+                channel.send(CommandProgress {
+                    progress_line: line,
+                }).unwrap();
+            }
+        }
+
+        /* handle input */
+        {
+
+        }
+
+        /* handle errors */
+        {
+            let stdout = command.stderr.as_mut().unwrap();
+            let stdout_reader = BufReader::new(stdout);
+            let stdout_lines = stdout_reader.lines();
+
+            let mut lines = vec![];
+
+            for line in stdout_lines.into_iter().flatten() {
+                lines.push(line);
+            }
+
+            if !lines.is_empty() {
+                channel.send(CommandFailed { errors_lines: lines, }).unwrap();
+            }
+        }
+        
+        let status = command.wait().unwrap();
+        
+        println!("command status {status:?}");
+        
+        if status.success() {
+            channel.send(CommandEnded { duration: start.elapsed().as_millis() }).unwrap();
+        } else { 
+            
+        }
+
+        
+    });
+    
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn kill_command(command_id: String,app: AppHandle, state: State<'_, AppState>) -> tauri::Result<bool> {
+    let webview = app.get_webview_window("main").unwrap();
+    webview.eval("console.log('Start kill process')")?;
+    
+    let mut state_lock = state.lock().unwrap();
+    if let Some(index) =  state_lock.running_commands.iter().position(|cmd| cmd.command_id == command_id) {
+        webview.eval("console.log('Found index')")?;
+        let system = System::new_all();
+        let command = state_lock.running_commands.get(index).unwrap();
+        webview.eval("console.log('found command')")?;
+        if let Some(process) = system.process(Pid::from_u32(command.processs_id)) {
+            if process.kill() {
+                webview.eval("console.log('kill process')")?;
+                state_lock.running_commands.remove(index);
+            } else {
+                
+                webview.eval("console.log('fail to kill process')")?;
+            }
         }
     }
 
-    /* handle error */
-    {
-        let stdout = cmd_child.stderr.as_mut().unwrap();
-        let stdout_reader = BufReader::new(stdout);
-        let stdout_lines = stdout_reader.lines();
-
-        for line in stdout_lines {
-            println!("Read: {:?}", line);
-        }
-    }
-
-    let status = cmd_child.wait().unwrap();
+    Ok(true)
 }

@@ -1,0 +1,38 @@
+.tab {
+    font-family: Chalkboard, Arial, Helvetica, sans-serif;
+    color: grey;
+
+    display: flex;
+    width: 250px;
+
+    height: var(--title-bar-height);
+    justify-content: space-between;
+    align-items: center;
+
+    border-right: 1px var(--app-thin-white) solid;
+
+    cursor: default;
+}
+
+.inactive-tab:hover {
+    cursor: pointer;
+    background-color: rgba(198, 253, 164, 0.35);
+    color: #313927;
+}
+
+.active-tab {
+    /*background-color: var(--app-green);*/
+    color: white;
+    border-bottom: 2px solid var(--app-green);
+    box-shadow: 1px 2px 0 1px rgba(14, 14, 14, 0.55);
+}
+
+.close-btn {
+    color: grey;
+    scale: 0.8;
+}
+
+.close-btn:hover {
+    color: white;
+    cursor: pointer;
+}
