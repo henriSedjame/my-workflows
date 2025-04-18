@@ -3,25 +3,28 @@
 
         <div class="command-script">
             <span class="tilde"> ~ </span>
-            <span>{{command()?.value}}</span>
-            @if (duration()) {
-                <span class="duration"> ( {{duration()}} seconds )</span>
-            }
+            <span>{{ command()?.value }}</span>
         </div>
 
-        <div class="command-result" #command_result >
+        <div class="command-result" #command_result>
             @if (lines().length > 0) {
                 <div class="command-lines" [ngClass]="commandClass()">
                     @for (line of lines(); track $index) {
-                        <span class="command-line">{{line}}</span>
+                        <span class="command-line">{{ line }}</span>
                     }
                 </div>
             }
             @if (errorLines().length > 0) {
                 <div class="command-lines errors">
                     @for (line of errorLines(); track $index) {
-                        <span class="command-line">{{line}}</span>
+                        <span class="command-line">{{ line }}</span>
                     }
+                </div>
+            }
+            @if (duration()) {
+                <div class="duration" >
+                    <span class="material-symbols-outlined duration-icon">schedule</span>
+                    <span class="duration-value">  {{ duration() }} seconds </span>
                 </div>
             }
 
@@ -40,8 +43,6 @@
         } @else {
             <div class="bottom-spaced"></div>
         }
-
-
 
 
     </div>

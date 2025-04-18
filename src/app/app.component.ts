@@ -1,4 +1,4 @@
-import {Component, effect, inject, OnDestroy, signal} from '@angular/core';
+import {Component, effect, inject, OnDestroy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {Channel, invoke} from "@tauri-apps/api/core";
 import {TitleBarComponent} from "./components/title-bar/title-bar.component";
@@ -7,6 +7,7 @@ import {EventCallback, EventName, listen, UnlistenFn} from "@tauri-apps/api/even
 import {AppEvents, CommandExecutionEvent, CommandRequested} from "./app.events";
 import {CommandViewComponent} from "./components/command-view/command-view.component";
 import {KillProcConfirmDialogComponent} from "./components/kill-proc-confirm-dialog/kill-proc-confirm-dialog.component";
+import {EXECUTE_COMMAND} from "./app.commands";
 
 @Component({
     selector: 'app-root',
@@ -31,26 +32,24 @@ export class AppComponent implements OnDestroy {
 
             channel.onmessage = (message) => {
                 switch (message.event) {
-                    case 'commandStarted':
+                    case AppEvents.COMMAND_STARTED:
                         this.appStore.newCommand(commandId, commandValue, commandLabel)
                         break;
-                    case 'commandProgress':
+                    case AppEvents.COMMAND_PROGRESS:
                         this.appStore.commandInProgress(commandId, message.data.progressLine)
                         break;
-                    case 'commandFailed':
+                    case AppEvents.COMMAND_FAILED:
                         this.appStore.commandFailed(commandId, message.data.errorsLines)
                         break;
-                    case 'commandEnded':
+                    case AppEvents.COMMAND_ENDED:
                         this.appStore.commandEnded(commandId, message.data.duration)
                         break;
                 }
-
-                console.log(message)
             }
 
-            invoke<boolean>('execute_command', {
+            invoke<boolean>(EXECUTE_COMMAND, {
                 commandId: commandId,
-                commandValue: event.payload.commandValue,
+                commandValue: event.payload.commandToExecute,
                 channel: channel
             })
         })

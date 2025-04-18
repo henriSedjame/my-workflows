@@ -5,9 +5,9 @@ mod utils;
 
 use crate::models::state::AppStateInner;
 use crate::utils::hide_main_view;
-use commands::{execute_command, kill_command};
+use commands::{execute_command, kill_command, no_running_command, hide_view};
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Listener, Manager};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
@@ -59,7 +59,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             execute_command,
-            kill_command
+            kill_command,
+            no_running_command,
+            hide_view
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

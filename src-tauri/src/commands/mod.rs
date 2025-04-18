@@ -1,17 +1,16 @@
+use crate::models::events::commands::CommandExecutionEvent;
 
-use crate::models::events::commands::{CommandExecutionEvent};
-
-use std::io::{BufRead, BufReader, Write};
+use crate::models::events::commands::CommandExecutionEvent::{CommandEnded, CommandFailed, CommandProgress, CommandStarted};
+use crate::models::state::{AppState, RunningCommand};
+use crate::utils::{hide_main_view, update_tray_menu};
+use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::time::Instant;
-use tauri::{AppHandle, Manager, State};
-use crate::models::events::commands::CommandExecutionEvent::{CommandStarted, CommandProgress, CommandFailed, CommandEnded};
-use crate::models::state::{AppState, RunningCommand};
 use sysinfo::{Pid, System};
-use time::error::Format::StdIo;
+use tauri::{AppHandle, Manager, State};
 
 #[tauri::command]
-pub async fn execute_command(command_id: String, command_value: String, channel: tauri::ipc::Channel<CommandExecutionEvent>, state: State<'_, AppState>)  -> tauri::Result<bool> {
+pub async fn execute_command(app: AppHandle, command_id: String, command_value: String, channel: tauri::ipc::Channel<CommandExecutionEvent>, state: State<'_, AppState>)  -> tauri::Result<bool> {
     
     channel.send(CommandStarted)?;
     
@@ -21,12 +20,12 @@ pub async fn execute_command(command_id: String, command_value: String, channel:
             .arg("-c")
             .arg(command_value.as_str())
             .stdout(Stdio::piped())
-            
             .stderr(Stdio::piped())
             .spawn()?;
-
-
+    
     let mut state_lock = state.lock().unwrap();
+    
+    state_lock.open_tabs = true;
 
     state_lock.running_commands.push(RunningCommand {
         command_id,
@@ -71,16 +70,15 @@ pub async fn execute_command(command_id: String, command_value: String, channel:
         
         let status = command.wait().unwrap();
         
-        println!("command status {status:?}");
-        
         if status.success() {
             channel.send(CommandEnded { duration: start.elapsed().as_millis() }).unwrap();
         } else { 
             
         }
-
         
     });
+   
+    tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
     
     Ok(true)
 }
@@ -108,4 +106,25 @@ pub fn kill_command(command_id: String,app: AppHandle, state: State<'_, AppState
     }
 
     Ok(true)
+}
+
+#[tauri::command]
+pub fn no_running_command(app: AppHandle, state: State<'_, AppState>) -> tauri::Result<()> {
+    let mut state_lock = state.lock().unwrap();
+    state_lock.open_tabs = false;
+    hide_main_view(&app);
+    tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
+    Ok(())
+}
+
+#[tauri::command]
+pub fn hide_view(app: AppHandle, state: State<'_, AppState>, open_tabs: bool) -> tauri::Result<()> {
+    let mut state_lock = state.lock().unwrap();
+    if !open_tabs {
+        state_lock.open_tabs = false;
+    }
+    hide_main_view(&app);
+    tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
+    Ok(())
+    
 }

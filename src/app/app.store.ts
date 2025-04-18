@@ -1,9 +1,7 @@
 import {patchState, signalStore, withComputed, withMethods, withState} from "@ngrx/signals";
 import {computed} from "@angular/core";
 import {invoke} from "@tauri-apps/api/core";
-import {getCurrentWindow} from "@tauri-apps/api/window";
-import {getCurrentWebviewWindow} from "@tauri-apps/api/webviewWindow";
-import {AppEvents} from "./app.events";
+import {HIDE_VIEW, KILL_COMMAND} from "./app.commands";
 
 
 export type CommandStatus = 'started' | 'in_progress' | 'succeeded' | 'failed' | 'cancelled';
@@ -164,7 +162,7 @@ export const AppStore = signalStore(
             })
 
             if (cmds.length === 0) {
-                getCurrentWebviewWindow().hide().then()
+                invoke(HIDE_VIEW, { openTabs: false }).then()
             }
 
         },
@@ -179,7 +177,7 @@ export const AppStore = signalStore(
             if (killProc) {
                 const data = store.killProcDialogData()
                 if(data) {
-                    invoke<boolean>('kill_command', {
+                    invoke<boolean>(KILL_COMMAND, {
                         commandId: data.commandId
                     }).then(killed => {
                         if (killed) {

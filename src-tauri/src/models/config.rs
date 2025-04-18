@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct AppConfig {
     pub variables: HashMap<String, String>,
+    pub secrets: HashMap<String, String>,
     pub navigations: Vec<Navigation>,
     pub commands: Vec<Cmd>,
 }

@@ -1,8 +1,9 @@
 import {Component, computed, inject} from '@angular/core';
 import {AppStore} from "../../app.store";
 import {NgClass} from "@angular/common";
-import {getCurrentWindow} from '@tauri-apps/api/window';
 import {TabHeaderComponent} from "../tab-header/tab-header.component";
+import {invoke} from "@tauri-apps/api/core";
+import {HIDE_VIEW} from "../../app.commands";
 
 
 @Component({
@@ -16,12 +17,14 @@ import {TabHeaderComponent} from "../tab-header/tab-header.component";
 })
 export class TitleBarComponent {
 
-    appWindow = getCurrentWindow()
-
     appStore = inject(AppStore);
 
     activeBtnClass = computed(() => ({
         'active': this.appStore.focused()
     }))
+    
+    hideView() {
+        invoke(HIDE_VIEW, { openTabs: true }).then()
+    }
 
 }

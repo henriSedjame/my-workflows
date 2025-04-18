@@ -17,6 +17,7 @@ pub mod commands {
         pub command_id: Uuid,
         pub command_label: &'a str,
         pub command_value: &'a str,
+        pub command_to_execute: &'a str,
     }
 
     impl Event for  CommandRequested<'_> {

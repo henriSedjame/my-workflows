@@ -14,6 +14,8 @@ pub enum AppErrors {
     EnvNotFound(String),
     #[error("Variable {0} not found")]
     VarNotFound(String),
+    #[error("Secret {0} not found")]
+    SecretNotFound(String),
     #[error("{0}")]
     EmitEventError(String)
 }
