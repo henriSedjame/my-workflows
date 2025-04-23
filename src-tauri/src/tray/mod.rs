@@ -2,7 +2,7 @@ use crate::models::events::commands::CommandRequested;
 use crate::models::events::emit_event;
 use crate::tray::menu::{create_menu, menu_items::{id_values, MenuItemIds}};
 use crate::utils::cmd::{evaluate_cmd_value, execute_cmd};
-use crate::utils::config::get_config_path;
+use crate::utils::config::{get_config_path};
 
 use tauri::image::Image;
 use tauri::menu::MenuEvent;
@@ -56,14 +56,17 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
                 MenuItemIds::Commands => {}
                 MenuItemIds::Cmd { id, cmd } => match evaluate_cmd_value(app, cmd) {
                     Ok(cmd) => {
+
+                        println!("CMDER => {cmd:?}");
                         
                         show_main_view(app);
-                        
+
                         emit_event(app, CommandRequested {
                             command_id: Uuid::new_v4(),
                             command_label: id.replace(id_values::CMD, "").as_str(),
                             command_value: cmd.modified_cmd.as_str(),
-                            command_to_execute: cmd.original_cmd.as_str()
+                            command_to_execute: cmd.original_cmd.as_str(),
+                            command_params: cmd.parameters
                         }).unwrap();
                     }
                     Err(e) => {

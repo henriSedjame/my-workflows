@@ -1,5 +1,6 @@
 <main>
     <app-title-bar/>
-    <app-kill-proc-confirm-dialog />
+    @if(appStore.killProcDialogOpened()) { <app-kill-proc-confirm-dialog /> }
+    @if (appStore.showParamsView()) { <app-command-params-view /> }
     <app-command-view />
 </main>

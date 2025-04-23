@@ -14,6 +14,7 @@ export type CommandRequested = {
     commandLabel: string,
     commandValue: string,
     commandToExecute: string,
+    commandParams: string[] | undefined,
 }
 
 export type CommandExecutionEvent =

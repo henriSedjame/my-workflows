@@ -1,0 +1,136 @@
+dialog {
+    position: fixed;
+    top: calc(50% - 75px);
+    z-index: 100;
+    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+    border: none;
+    border-radius: 20px;
+    background-color: var(--bg-color);
+
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 25px ;
+    max-width: 80%;
+}
+
+.cmd-script {
+    width: 100%;
+    padding: 10px 25px;
+    border-radius: 20px 20px 0 0;
+    margin-bottom: 15px;
+    color: var(--bg-color);
+    font-style: italic;
+    text-align: center;
+    background-color: lightgray;
+    position: relative;
+}
+
+.term-icon {
+    position: absolute;
+    left: 10px;
+
+}
+.param-bloc {
+    max-width: 90%;
+    min-width: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.param-input {
+    width: 100%;
+    height: 30px;
+    margin-bottom:15px ;
+    border-radius: 10px;
+    padding-left: 5px;
+    font-size: 12px;
+    border: none;
+}
+
+.filled {
+    border: 2px solid var(--app-green);
+}
+input:focus {
+    outline: none;
+}
+
+input::placeholder {
+    color: #7e7d7d;
+    font-style: italic;
+    font-size: 11px;
+}
+
+.param-name {
+    width: 100%;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: grey;
+    font-family: Chalkboard, Arial, Helvetica, sans-serif;
+
+    display: flex;
+    justify-content: start;
+    align-items: center;
+}
+
+.setting-icon {
+    scale: 0.7
+}
+.buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+button {
+    width: 125px;
+    height: 30px;
+    border-radius: 5px;
+    border: none;
+    background-color: #4c4c4c;
+
+    font-size: 12px;
+    color: #9f9f9f;
+
+    cursor: not-allowed;
+    margin-bottom: 25px;
+    margin-top: 15px;
+}
+
+.ready {
+    cursor: pointer;
+    background-color: var(--app-green);
+    color: var(--bg-color);
+}
+
+.cancel-button {
+    background-color: #c6c5c5;
+    color: #606060;
+    cursor: pointer;
+}
+.msg {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-style: italic;
+    font-size: 12px;
+    color: grey;
+    margin-top: 10px;
+    background-color: rgba(211, 211, 211, 0.17);
+}
+
+.enter-btn {
+    scale: 0.7;
+    padding: 2px;
+    background-color: lightgray;
+    color: var(--bg-color);
+    border-radius: 5px;
+}
+

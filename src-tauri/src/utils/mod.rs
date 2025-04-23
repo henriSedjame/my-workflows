@@ -11,6 +11,7 @@ pub(crate) mod config;
 pub fn show_main_view(app: &AppHandle) {
     let window = app.get_webview_window("main").unwrap();
     window.show().unwrap();
+    window.set_focus().unwrap();
 }
 
 pub fn hide_main_view(app: &AppHandle) {

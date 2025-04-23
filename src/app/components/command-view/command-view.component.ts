@@ -33,6 +33,8 @@ export class CommandViewComponent implements OnInit {
         return undefined
     })
 
+    isWaiting = computed(() => this.command()?.status === 'waiting_for_params')
+
     isRunning = computed(() => this.command()?.status === 'in_progress' || this.command()?.status === 'started')
 
     commandClass = computed(() => ({

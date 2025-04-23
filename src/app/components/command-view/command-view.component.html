@@ -1,16 +1,18 @@
 @if (command()) {
     <div class="command-container">
-        @if (!isRunning()) {
+        @if (!isRunning() && !isWaiting()) {
             <div class="replay-btn" (click)="replay()">
                 <span class="material-symbols-outlined replay-icon">autoplay</span>
                 <div class="replay-text">REPLAY</div>
             </div>
         }
 
-        <div class="command-script">
-            <span class="tilde"> ~ </span>
-            <span>{{ command()?.value }}</span>
-        </div>
+        @if (!isWaiting()) {
+            <div class="command-script">
+                <span class="tilde"> ~ </span>
+                <span>{{ command()?.value }}</span>
+            </div>
+        }
 
         <div class="command-result" [ngClass]="commandClass()" >
             @if (lines().length > 0) {

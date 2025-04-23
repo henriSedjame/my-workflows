@@ -18,6 +18,7 @@ pub mod commands {
         pub command_label: &'a str,
         pub command_value: &'a str,
         pub command_to_execute: &'a str,
+        pub command_params: Option<Vec<String>>
     }
 
     impl Event for  CommandRequested<'_> {

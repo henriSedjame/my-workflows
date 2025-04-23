@@ -1,4 +1,4 @@
-export type CommandStatus = 'started' | 'in_progress' | 'succeeded' | 'failed' | 'cancelled';
+export type CommandStatus = 'waiting_for_params' | 'started' | 'in_progress' | 'succeeded' | 'failed' | 'cancelled';
 
 export type Command = {
     id: string,
@@ -22,3 +22,7 @@ export type KillProcDialogData = {
     closeTab: boolean,
 }
 
+export type CommandParam = {
+    name: string,
+    value: string|undefined,
+}

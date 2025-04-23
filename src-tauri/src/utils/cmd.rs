@@ -2,61 +2,122 @@ use std::process::{Command, Output};
 
 use crate::models::errors::AppErrors;
 use crate::models::state::AppState;
+use regex::Captures;
 use tauri::{AppHandle, Manager};
 
 pub const PROGRAM_NAME: &str = "sh";
 
-pub const ENV_PREFIX: &str = "$env.";
-pub const VARS_PREFIX: &str = "$vars.";
-pub const SECRETS_PREFIX: &str = "$secrets.";
+pub const ENVS: &str = "envs";
+pub const VARS: &str = "variables";
+pub const SECRETS: &str = "secrets";
+pub const PARAMS: &str = "params";
 
+pub const ENV_PREFIX: &str = "${env.";
+pub const VARS_PREFIX: &str = "${vars.";
+pub const SECRETS_PREFIX: &str = "${secrets.";
+pub const PARAM_PREFIX: &str = "${param.";
+
+pub const MODIFIED_SECRET: &str = "•••••••••";
+
+pub const SUFFIX: &str = "}";
+
+
+#[derive(Debug)]
 pub struct EvaluatedCmd {
     pub original_cmd: String,
     pub modified_cmd: String,
+    pub parameters: Option<Vec<String>>,
 }
-pub fn evaluate_cmd_value(app: &AppHandle, cmd: String) -> Result<EvaluatedCmd, AppErrors> {
-    let mut result = String::new();
-    let mut modified = String::new();
 
-    for cmd in cmd.trim().split(' ') {
-        if cmd.starts_with(ENV_PREFIX) {
-            let env_name = cmd.replace(ENV_PREFIX, "");
-            let cmd = format!("echo ${}", env_name);
-            if let Some(s) = execute_and_get(cmd.as_str(), || {}) {
-                result = result + " " + &s;
-                modified = modified + " " + &s;
-            } else {
-                return Err(AppErrors::EnvNotFound(env_name));
-            }
-        } else if cmd.starts_with(VARS_PREFIX) {
-            let var_part = *cmd.split("/").collect::<Vec<&str>>().first().unwrap();
-            let remaining_part = cmd.replace(var_part, "");
-            let var_name = var_part.replace(VARS_PREFIX, "");
-            if let Some(s) = get_var(app, var_name.as_str()) {
-                result = result + " " + &s + &remaining_part;
-                modified = modified + " " + &s + &remaining_part;
-            } else {
-                return Err(AppErrors::VarNotFound(var_name));
-            }
-            
-        }  else if cmd.starts_with(SECRETS_PREFIX) {
-            let var_name = cmd.replace(SECRETS_PREFIX, "");
-            if let Some(s) = get_secret(app, var_name.as_str()) {
-                result = result + " " + &s;
-                modified = modified + " " + "🔐{hidden}";
-            } else {
-                return Err(AppErrors::SecretNotFound(var_name));
-            }
-        } else {
-            result = result + " " + cmd;
-            modified = modified + " " + cmd;
-        }
+
+pub fn evaluate_cmd_value(app: &AppHandle, cmd: String) -> Result<EvaluatedCmd, AppErrors> {
+    let mut original_cmd = cmd.clone();
+    let mut modified_cmd = cmd.clone();
+    let mut parameters : Vec<String> = vec![];
+
+    let regex = regex::Regex::new(
+        r"(?<envs>(\$\{env.\w+}))|(?<variables>(\$\{vars.\w+}))|(?<secrets>(\$\{secrets.\w+}))|(?<params>(\$\{param.\w+}))",
+    )
+    .unwrap();
+
+    for cap in regex.captures_iter(cmd.as_ref()) {
+        handle_capture(
+            &cap,
+            ENVS,
+            ENV_PREFIX,
+            |s| {
+                let cmd = format!("echo ${s}");
+                execute_and_get(cmd.as_str(), || {})
+            },
+            |match_str, s| {
+                original_cmd = original_cmd.replace(match_str, s.as_str());
+                modified_cmd = modified_cmd.replace(match_str, s.as_str());
+            },
+            |s| Some(AppErrors::EnvNotFound(s)),
+        )?;
+
+        handle_capture(
+            &cap,
+            VARS,
+            VARS_PREFIX,
+            |s| get_var(app, s.as_str()) ,
+            |match_str, s| {
+                original_cmd = original_cmd.replace(match_str, s.as_str());
+                modified_cmd = modified_cmd.replace(match_str, s.as_str());
+            },
+            |s| Some(AppErrors::VarNotFound(s)),
+        )?;
+
+        handle_capture(
+            &cap,
+            SECRETS,
+            SECRETS_PREFIX,
+            |s| get_secret(app, s.as_str()) ,
+            |match_str, s| {
+                original_cmd = original_cmd.replace(match_str, s.as_str());
+                modified_cmd = modified_cmd.replace(match_str, MODIFIED_SECRET);
+            },
+            |s| Some(AppErrors::SecretNotFound(s)),
+        )?;
+
+        handle_capture(
+            &cap,
+            PARAMS,
+            PARAM_PREFIX,
+            |s| Some(s) ,
+            |_match_str, s| parameters.push(s),
+            |_s| None,
+        )?;
     }
 
     Ok(EvaluatedCmd {
-        original_cmd: result,
-        modified_cmd: modified,
+        original_cmd,
+        modified_cmd,
+        parameters: if parameters.is_empty() { None } else { Some(parameters) },
     })
+}
+
+pub fn handle_capture(
+    cap: &Captures,
+    name: &str,
+    prefix: &str,
+    getter: impl Fn(String) -> Option<String>,
+    mut transformer: impl FnMut(&str, String) -> (),
+    err: impl Fn(String) -> Option<AppErrors>,
+) -> Result<(), AppErrors> {
+    if let Some(m) = cap.name(name) {
+        let match_str = m.as_str().trim();
+        let var_name = match_str.replace(prefix, "");
+        if let Some(s) = getter(var_name.to_string().replace(SUFFIX, "")) {
+            transformer(match_str, s);
+        } else {
+            if let Some(e) = err(var_name){
+                return Err(e);
+            }
+        }
+    }
+
+    Ok(())
 }
 
 pub fn get_var(app: &AppHandle, var_name: &str) -> Option<String> {
@@ -73,7 +134,6 @@ pub fn get_secret(app: &AppHandle, var_name: &str) -> Option<String> {
 
 pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), on_error: impl Fn()) {
     let output = tauri::async_runtime::block_on(async move {
-        println!("Executing command: {}", cmd);
         Command::new(PROGRAM_NAME)
             .arg("-c")
             .arg(cmd)
@@ -81,7 +141,7 @@ pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), on_error: impl Fn()) {
             .unwrap()
     });
 
-    if output.status.success()  {
+    if output.status.success() {
         handler(output);
     } else {
         on_error();
@@ -98,7 +158,7 @@ pub fn execute_and_get(cmd: &str, on_error: impl Fn()) -> Option<String> {
     });
 
     if output.status.success() {
-        let value = String::from_utf8(output.stdout).unwrap();
+        let value = String::from_utf8(output.stdout).unwrap().trim().to_string();
         if value.is_empty() {
             None
         } else {

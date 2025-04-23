@@ -32,6 +32,7 @@ time = "0.3.37"
 cocoa = "0.26.0"
 uuid = { version = "1.14.0", features = ["v4"] }
 sysinfo = "0.34.2"
+regex = "1.11.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

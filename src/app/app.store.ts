@@ -2,14 +2,15 @@ import {patchState, signalStore, withComputed, withMethods, withState} from "@ng
 import {computed} from "@angular/core";
 import {invoke} from "@tauri-apps/api/core";
 import {HIDE_VIEW, KILL_COMMAND} from "./app.commands";
-import {Command, KillProcDialogData, Tab} from "./app.models";
+import {Command, CommandParam, KillProcDialogData, Tab} from "./app.models";
 
 
 type AppState = {
     focused: boolean;
     commands: Command[],
-    currentTab: string|undefined,
+    currentTab: string | undefined,
     killProcDialogData: KillProcDialogData | undefined,
+    nextCommandParams: CommandParam[] | undefined,
 }
 
 export const initialState: AppState = {
@@ -17,13 +18,18 @@ export const initialState: AppState = {
     commands: [],
     currentTab: undefined,
     killProcDialogData: undefined,
+    nextCommandParams: undefined,
 }
 
 export const AppStore = signalStore(
     {providedIn: 'root'},
     withState<AppState>(initialState),
     withComputed((state) => ({
-        tabs: computed<Tab[]>(() => state.commands().map((command) => ({id: command.id, label: command.label, status: command.status})),),
+        tabs: computed<Tab[]>(() => state.commands().map((command) => ({
+            id: command.id,
+            label: command.label,
+            status: command.status
+        })),),
         currentCommand: computed(() => {
             const tab = state.currentTab()
 
@@ -33,7 +39,8 @@ export const AppStore = signalStore(
 
             return undefined
         }),
-        killProcDialogOpened: computed(() => state.killProcDialogData() != undefined)
+        killProcDialogOpened: computed(() => state.killProcDialogData() != undefined),
+        showParamsView: computed(() => state.nextCommandParams() != undefined),
     })),
     withMethods((store) => ({
 
@@ -41,12 +48,74 @@ export const AppStore = signalStore(
             patchState(store, {focused: value})
         },
 
+        requestNextCommandParams(id: string, value: string, label: string, script: string, params: string[]) {
+            patchState(store, {
+                commands: [
+                    ...store.commands(),
+                    {
+                        id: id,
+                        label: label,
+                        value: value,
+                        executedScript: script,
+                        progressLines: [],
+                        errorLines: [],
+                        status: 'waiting_for_params',
+                        duration: undefined
+                    }
+                ],
+                nextCommandParams: params.map((param) => ({
+                    name: param,
+                    value: undefined
+                })),
+                currentTab: id
+            })
+        },
+
+        setNextCommandParamValue(paramName: string, value: string) {
+            patchState(store, {
+                nextCommandParams: store.nextCommandParams()?.map((param) => {
+                    if (param.name == paramName) {
+                        return {
+                            ...param,
+                            value: value
+                        }
+                    }
+                    return param
+                })
+            })
+        },
+
+        cancelNextCommandParams() {
+            const id = store.currentTab()
+            patchState(store, {
+                nextCommandParams: undefined,
+                currentTab: undefined
+            })
+            if (id) {
+                this.closeTab(id)
+            }
+        },
         newCommand(id: string, value: string, label: string, script: string) {
 
             const commands = store.commands()
 
-            patchState(store, {
-                commands: [
+            let newCommands: Command[] = [];
+
+            if (commands.filter((command) => command.id == id).length > 0) {
+
+                newCommands = this._updateCommands(
+                    commands,
+                    id,
+                    (command) => ({
+                        ...command,
+                        label: label,
+                        value: value,
+                        executedScript: script,
+                        status: 'started'
+                    })
+                )
+            } else {
+                newCommands = [
                     ...commands,
                     {
                         id: id,
@@ -58,8 +127,12 @@ export const AppStore = signalStore(
                         status: 'started',
                         duration: undefined
                     }
-                ],
-                currentTab: id
+                ]
+            }
+            patchState(store, {
+                commands: newCommands,
+                currentTab: id,
+                nextCommandParams: undefined,
             })
         },
 
@@ -159,21 +232,21 @@ export const AppStore = signalStore(
             })
 
             if (cmds.length === 0) {
-                invoke(HIDE_VIEW, { openTabs: false }).then()
+                invoke(HIDE_VIEW, {openTabs: false}).then()
             }
 
         },
 
         openConfirmKillProcDialog(id: string, closeTab: boolean) {
-           patchState(store, {
-               killProcDialogData: { commandId: id, closeTab: closeTab },
-           })
+            patchState(store, {
+                killProcDialogData: {commandId: id, closeTab: closeTab},
+            })
         },
 
         closeConfirmKillProcDialog(killProc: boolean) {
             if (killProc) {
                 const data = store.killProcDialogData()
-                if(data) {
+                if (data) {
                     invoke<boolean>(KILL_COMMAND, {
                         commandId: data.commandId
                     }).then(killed => {

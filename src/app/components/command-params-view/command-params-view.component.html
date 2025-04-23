@@ -1,0 +1,42 @@
+<div class="dialog-container">
+    <dialog>
+
+        <div class="cmd-script">
+            <span class="material-symbols-outlined term-icon">terminal</span>
+            {{command_value()}}
+        </div>
+
+        @if (params()) {
+            @for (param of params(); track $index) {
+                <div class="param-bloc">
+                    <div class="param-name">
+                        <span class="material-symbols-outlined setting-icon">settings</span>
+                        {{param.name}}
+                    </div>
+                    <input class="param-input"
+                            id="{{$index}}-{{param.name}}"
+                            [ngClass]="filledParams().includes(param.name) ? 'filled' : ''"
+                            [placeholder]="placeholder(param.name)"
+                            [value]="param.value ?? '' "
+                            (input)="onInput(param.name)"
+                            (change)="updateParam($event, param.name)"/>
+                </div>
+
+            }
+        }
+
+        <div class="msg">
+            Press <span class="material-symbols-outlined enter-btn">subdirectory_arrow_left</span> to validate your input
+        </div>
+        <div class="buttons">
+            <button (click)="cancel()" class="cancel-button">
+                Cancel
+            </button>
+            <button [ngClass]="btnClass()" (click)="sendCommand()">
+                Run command
+            </button>
+        </div>
+
+    </dialog>
+</div>
+

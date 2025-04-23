@@ -291,14 +291,6 @@ pub mod menu_items {
            menu.remove(sep_item)?;
        };
         
-        /*if let Some(item) = items.clone().into_iter().find(|item| {
-            let menu_id = item.id();
-            menu_id.0.as_str() == id_values::SHOW_VIEW || menu_id.0.as_str() == id_values::HIDE_VIEW
-        }) {
-            
-            menu.remove(&item)?;
-        }*/
-
         Ok(())
     }
 }

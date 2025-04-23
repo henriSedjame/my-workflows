@@ -1,3 +1,4 @@
+
 use crate::models::events::commands::CommandExecutionEvent;
 
 use crate::models::events::commands::CommandExecutionEvent::{CommandEnded, CommandFailed, CommandProgress, CommandStarted};
@@ -48,16 +49,6 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
                     progress_line: line,
                 }).unwrap();
             }
-        }
-
-        /* handle input */
-        {
-
-        }
-
-        /* handle errors */
-        {
-            
         }
         
         let status = command.wait().unwrap();
