@@ -1,14 +1,20 @@
 @if (command()) {
     <div class="command-container">
+        @if (!isRunning()) {
+            <div class="replay-btn" (click)="replay()">
+                <span class="material-symbols-outlined replay-icon">autoplay</span>
+                <div class="replay-text">REPLAY</div>
+            </div>
+        }
 
         <div class="command-script">
             <span class="tilde"> ~ </span>
             <span>{{ command()?.value }}</span>
         </div>
 
-        <div class="command-result" #command_result>
+        <div class="command-result" [ngClass]="commandClass()" >
             @if (lines().length > 0) {
-                <div class="command-lines" [ngClass]="commandClass()">
+                <div class="command-lines" #command_result>
                     @for (line of lines(); track $index) {
                         <span class="command-line">{{ line }}</span>
                     }
@@ -21,6 +27,7 @@
                     }
                 </div>
             }
+
             @if (duration()) {
                 <div class="duration" >
                     <span class="material-symbols-outlined duration-icon">schedule</span>
@@ -30,20 +37,19 @@
 
         </div>
 
-        @if (isRunning()) {
-            <div class="kill-instructions">
-                <span class="msg"> Kill Process  </span>
-                <span class="btn">
+        <div class="bottom-spaced">
+            @if (isRunning()) {
+                <div class="kill-instructions">
+                    <span class="msg"> Kill Process  </span>
+                    <span class="btn">
                     <span class="material-symbols-outlined cmd-key">keyboard_control_key</span>
                 </span>
 
-                <span class="k-letter btn">C</span>
-            </div>
-            <div class="loader"></div>
-        } @else {
-            <div class="bottom-spaced"></div>
-        }
-
+                    <span class="k-letter btn">C</span>
+                </div>
+                <div class="loader"></div>
+            }
+        </div>
 
     </div>
 

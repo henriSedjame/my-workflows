@@ -8,6 +8,7 @@ import {AppEvents, CommandExecutionEvent, CommandRequested} from "./app.events";
 import {CommandViewComponent} from "./components/command-view/command-view.component";
 import {KillProcConfirmDialogComponent} from "./components/kill-proc-confirm-dialog/kill-proc-confirm-dialog.component";
 import {EXECUTE_COMMAND} from "./app.commands";
+import {AppService} from "./app.service";
 
 @Component({
     selector: 'app-root',
@@ -17,6 +18,7 @@ import {EXECUTE_COMMAND} from "./app.commands";
 })
 export class AppComponent implements OnDestroy {
     appStore = inject(AppStore)
+    appService = inject(AppService)
     unListens: UnlistenFn[] = []
 
     _e = effect(async () => {
@@ -27,13 +29,19 @@ export class AppComponent implements OnDestroy {
             const commandId = event.payload.commandId
             const commandLabel = event.payload.commandLabel
             const commandValue = event.payload.commandValue
+            const commandScript = event.payload.commandToExecute
 
-            const channel = new Channel<CommandExecutionEvent>()
+            this.appService.executeCommand(
+                commandId,
+                commandScript,
+                {label: commandLabel, value: commandValue}
+            )
+            /*const channel = new Channel<CommandExecutionEvent>()
 
             channel.onmessage = (message) => {
                 switch (message.event) {
                     case AppEvents.COMMAND_STARTED:
-                        this.appStore.newCommand(commandId, commandValue, commandLabel)
+                        this.appStore.newCommand(commandId, commandValue, commandLabel, commandScript)
                         break;
                     case AppEvents.COMMAND_PROGRESS:
                         this.appStore.commandInProgress(commandId, message.data.progressLine)
@@ -49,9 +57,9 @@ export class AppComponent implements OnDestroy {
 
             invoke<boolean>(EXECUTE_COMMAND, {
                 commandId: commandId,
-                commandValue: event.payload.commandToExecute,
+                commandValue: commandScript,
                 channel: channel
-            })
+            })*/
         })
     })
 

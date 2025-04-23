@@ -2,30 +2,8 @@ import {patchState, signalStore, withComputed, withMethods, withState} from "@ng
 import {computed} from "@angular/core";
 import {invoke} from "@tauri-apps/api/core";
 import {HIDE_VIEW, KILL_COMMAND} from "./app.commands";
+import {Command, KillProcDialogData, Tab} from "./app.models";
 
-
-export type CommandStatus = 'started' | 'in_progress' | 'succeeded' | 'failed' | 'cancelled';
-
-type Command = {
-    id: string,
-    label: string,
-    value: string,
-    progressLines: string[];
-    errorLines: string[];
-    status: CommandStatus;
-    duration: number | undefined;
-}
-
-export type Tab = {
-    id: string,
-    label: string,
-    status: CommandStatus,
-}
-
-type KillProcDialogData = {
-    commandId: string,
-    closeTab: boolean,
-}
 
 type AppState = {
     focused: boolean;
@@ -63,7 +41,7 @@ export const AppStore = signalStore(
             patchState(store, {focused: value})
         },
 
-        newCommand(id: string, value: string, label: string) {
+        newCommand(id: string, value: string, label: string, script: string) {
 
             const commands = store.commands()
 
@@ -74,6 +52,7 @@ export const AppStore = signalStore(
                         id: id,
                         label: label,
                         value: value,
+                        executedScript: script,
                         progressLines: [],
                         errorLines: [],
                         status: 'started',
@@ -101,7 +80,7 @@ export const AppStore = signalStore(
             })
         },
 
-        commandFailed(id: string, lines: string[]) {
+        commandFailed(id: string, lines: string[], duration: number) {
             patchState(store, {
                 commands: this._updateCommands(
                     store.commands(),
@@ -109,20 +88,22 @@ export const AppStore = signalStore(
                     (command) => ({
                         ...command,
                         status: 'failed',
-                        errorLines: lines
+                        errorLines: lines,
+                        duration: duration,
                     })
                 ),
             })
         },
 
-        commandEnded(id: string, duration: number) {
+        commandEnded(id: string, duration: number, statusCode: number) {
+
             patchState(store, {
                 commands: this._updateCommands(
                     store.commands(),
                     id,
                     (command) => ({
                         ...command,
-                        status: 'succeeded',
+                        status: statusCode == 0 ? 'succeeded' : 'cancelled',
                         duration: duration
                     })
                 ),
@@ -137,6 +118,22 @@ export const AppStore = signalStore(
                     (command) => ({
                         ...command,
                         status: 'cancelled'
+                    })
+                ),
+            })
+        },
+
+        replayCommand(id: string) {
+            patchState(store, {
+                commands: this._updateCommands(
+                    store.commands(),
+                    id,
+                    (command) => ({
+                        ...command,
+                        status: 'started',
+                        errorLines: [],
+                        progressLines: [],
+                        duration: undefined,
                     })
                 ),
             })

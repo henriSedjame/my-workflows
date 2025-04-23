@@ -15,17 +15,18 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
     channel.send(CommandStarted)?;
     
     let start = Instant::now();
+
+    let mut state_lock = state.lock().unwrap();
     
     let mut command = Command::new("sh")
             .arg("-c")
+           
             .arg(command_value.as_str())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
     
-    let mut state_lock = state.lock().unwrap();
-    
-    state_lock.open_tabs = true;
+    state_lock.view_visible = true;
 
     state_lock.running_commands.push(RunningCommand {
         command_id,
@@ -53,6 +54,14 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
 
         /* handle errors */
         {
+            
+        }
+        
+        let status = command.wait().unwrap();
+        
+        if status.success() {
+            channel.send(CommandEnded { duration: start.elapsed().as_millis(), status_code: status.code().unwrap() }).unwrap();
+        } else {
             let stdout = command.stderr.as_mut().unwrap();
             let stdout_reader = BufReader::new(stdout);
             let stdout_lines = stdout_reader.lines();
@@ -64,16 +73,17 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
             }
 
             if !lines.is_empty() {
-                channel.send(CommandFailed { errors_lines: lines, }).unwrap();
+                channel.send(CommandFailed { 
+                    errors_lines: lines, 
+                    duration: start.elapsed().as_millis(),
+                    status_code: status.code().unwrap()
+                }).unwrap();
+            } else {
+                channel.send(CommandEnded { 
+                    duration: start.elapsed().as_millis(), 
+                    status_code: status.code().or_else(||Some(-1)).unwrap()
+                }).unwrap();
             }
-        }
-        
-        let status = command.wait().unwrap();
-        
-        if status.success() {
-            channel.send(CommandEnded { duration: start.elapsed().as_millis() }).unwrap();
-        } else { 
-            
         }
         
     });
@@ -109,22 +119,12 @@ pub fn kill_command(command_id: String,app: AppHandle, state: State<'_, AppState
 }
 
 #[tauri::command]
-pub fn no_running_command(app: AppHandle, state: State<'_, AppState>) -> tauri::Result<()> {
-    let mut state_lock = state.lock().unwrap();
-    state_lock.open_tabs = false;
-    hide_main_view(&app);
-    tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
-    Ok(())
-}
-
-#[tauri::command]
 pub fn hide_view(app: AppHandle, state: State<'_, AppState>, open_tabs: bool) -> tauri::Result<()> {
     let mut state_lock = state.lock().unwrap();
     if !open_tabs {
-        state_lock.open_tabs = false;
+        state_lock.view_visible = false;
     }
     hide_main_view(&app);
     tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
     Ok(())
-    
 }

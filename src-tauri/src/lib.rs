@@ -5,12 +5,11 @@ mod utils;
 
 use crate::models::state::AppStateInner;
 use crate::utils::hide_main_view;
-use commands::{execute_command, kill_command, no_running_command, hide_view};
+use commands::{execute_command, hide_view, kill_command};
 use std::sync::Mutex;
-use tauri::{Listener, Manager};
+use tauri::Manager;
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,13 +22,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
-
-            /*Enable auto start*/{
+            /*Enable auto start*/
+            {
                 let autostart_manager = app.autolaunch();
                 let _ = autostart_manager.enable();
             }
 
-            /* Hide app and dock icon */{
+            /* Hide app and dock icon */
+            {
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
 
@@ -37,7 +37,8 @@ pub fn run() {
 
             hide_main_view(app_handle);
 
-            /* Add initial state */ {
+            /* Add initial state */
+            {
                 match AppStateInner::new() {
                     Ok(inner) => {
                         app.manage(Mutex::new(inner));
@@ -50,17 +51,15 @@ pub fn run() {
                             .title("Failed to retrieve configuration".to_uppercase())
                             .kind(MessageDialogKind::Error)
                             .blocking_show();
-                        panic!("")
+                        panic!("Failed to retrieve configuration")
                     }
                 }
             }
-
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             execute_command,
             kill_command,
-            no_running_command,
             hide_view
         ])
         .run(tauri::generate_context!())

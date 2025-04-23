@@ -29,10 +29,12 @@ pub fn evaluate_cmd_value(app: &AppHandle, cmd: String) -> Result<EvaluatedCmd, 
                 return Err(AppErrors::EnvNotFound(env_name));
             }
         } else if cmd.starts_with(VARS_PREFIX) {
-            let var_name = cmd.replace(VARS_PREFIX, "");
+            let var_part = *cmd.split("/").collect::<Vec<&str>>().first().unwrap();
+            let remaining_part = cmd.replace(var_part, "");
+            let var_name = var_part.replace(VARS_PREFIX, "");
             if let Some(s) = get_var(app, var_name.as_str()) {
-                result = result + " " + &s;
-                modified = modified + " " + &s;
+                result = result + " " + &s + &remaining_part;
+                modified = modified + " " + &s + &remaining_part;
             } else {
                 return Err(AppErrors::VarNotFound(var_name));
             }
@@ -71,6 +73,7 @@ pub fn get_secret(app: &AppHandle, var_name: &str) -> Option<String> {
 
 pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), on_error: impl Fn()) {
     let output = tauri::async_runtime::block_on(async move {
+        println!("Executing command: {}", cmd);
         Command::new(PROGRAM_NAME)
             .arg("-c")
             .arg(cmd)

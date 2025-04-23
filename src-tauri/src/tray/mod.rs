@@ -7,11 +7,11 @@ use crate::utils::config::get_config_path;
 use tauri::image::Image;
 use tauri::menu::MenuEvent;
 use tauri::tray::{TrayIcon, TrayIconBuilder};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::AppHandle;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use uuid::Uuid;
 
-use crate::utils::{hide_main_view, show_main_view, update_tray_menu};
+use crate::utils::{close_main_view, hide_main_view, show_main_view, update_tray_menu};
 
 pub(crate) mod menu;
 
@@ -27,7 +27,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
         .on_menu_event(|app, event: MenuEvent| {
             let id : MenuItemIds = event.id.into();
             match id {
-                MenuItemIds::Quit => app.hide_menu().unwrap(),
+                MenuItemIds::Quit => close_main_view(app),
                 MenuItemIds::Config => {
                     if let Ok(path) = get_config_path() {
                         let cmd = format!("open {}", path);

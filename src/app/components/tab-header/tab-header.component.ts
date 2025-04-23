@@ -1,6 +1,7 @@
 import {Component, computed, inject, input} from '@angular/core';
-import {AppStore, Tab} from "../../app.store";
+import {AppStore} from "../../app.store";
 import {NgClass} from "@angular/common";
+import {Tab} from "../../app.models";
 
 @Component({
   selector: 'app-tab-header',

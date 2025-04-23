@@ -17,7 +17,7 @@
         "title": "MyWorkflowApp",
         "width": 800,
         "height": 800,
-        "resizable": false,
+        "resizable": true,
         "backgroundColor": "#00000000",
         "hiddenTitle": true,
         "transparent": true,

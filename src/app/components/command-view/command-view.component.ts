@@ -1,6 +1,7 @@
 import {Component, computed, effect, ElementRef, inject, OnInit, viewChild} from '@angular/core';
 import {AppStore} from "../../app.store";
 import {NgClass} from "@angular/common";
+import {AppService} from "../../app.service";
 
 @Component({
     selector: 'app-command-view',
@@ -13,6 +14,8 @@ import {NgClass} from "@angular/common";
 export class CommandViewComponent implements OnInit {
 
     appStore = inject(AppStore);
+
+    appService = inject(AppService)
 
     command = this.appStore.currentCommand
 
@@ -46,7 +49,7 @@ export class CommandViewComponent implements OnInit {
         if (elmt) {
             elmt.scroll({
                 behavior: 'smooth',
-                top: elmt.scrollHeight - 30
+                top: elmt.scrollHeight + 40
             })
         }
     })
@@ -59,5 +62,12 @@ export class CommandViewComponent implements OnInit {
             }
 
         })
+    }
+
+    replay() {
+        let command = this.command();
+        if (command) {
+            this.appService.executeCommand(command.id, command.executedScript)
+        }
     }
 }

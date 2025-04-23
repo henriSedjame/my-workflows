@@ -15,7 +15,7 @@ pub struct AppStateInner {
     pub config: AppConfig,
     pub menu: Option<Menu<Wry>>,
     pub running_commands: Vec<RunningCommand>,
-    pub open_tabs: bool,
+    pub view_visible: bool,
 }
 
 impl AppStateInner {
@@ -29,7 +29,7 @@ impl AppStateInner {
                 config,
                 menu: None,
                 running_commands: vec![],
-                open_tabs: false,
+                view_visible: false,
             }),
             Err(e) => {
                 println!("Config JSON => {}", e);

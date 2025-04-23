@@ -47,6 +47,13 @@ pub fn create_config_dir() -> Result<String, AppErrors> {
     Ok(config_path)
 }
 
+pub fn update_config(config: &AppConfig) -> Result<(), AppErrors> {
+    let config_path = get_config_path()?;
+    let mut config_file = fs::File::create(&config_path)?;
+    serde_json::to_writer_pretty(&mut config_file, config)?;
+    Ok(())
+}
+
 /// Get the path to the icons directory
 pub fn get_config_icons_path(icon: String) -> Result<String, AppErrors> {
     let home_dir = get_home_dir()?;

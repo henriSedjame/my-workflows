@@ -34,7 +34,7 @@ pub mod menu_items {
     }
 
     mod texts {
-        pub const QUIT: &str = " Close ";
+        pub const QUIT: &str = "Close app";
 
         pub const CONFIG: &str = "Open configuration";
 
@@ -281,56 +281,25 @@ pub mod menu_items {
     pub fn remove_show_hide_view_item(menu: &Menu<Wry>) -> tauri::Result<()> {
         let items = menu.items()?;
 
-        if let Some(item) = items.clone().into_iter().find(|item| {
+       if let Some(p) =  items.iter().position(|item| {
+            let menu_id = item.id();
+            menu_id.0.as_str() == id_values::SHOW_VIEW || menu_id.0.as_str() == id_values::HIDE_VIEW
+        }){
+           let item = items.get(p).unwrap();
+           let sep_item = items.get(p + 1).unwrap();
+           menu.remove(item)?;
+           menu.remove(sep_item)?;
+       };
+        
+        /*if let Some(item) = items.clone().into_iter().find(|item| {
             let menu_id = item.id();
             menu_id.0.as_str() == id_values::SHOW_VIEW || menu_id.0.as_str() == id_values::HIDE_VIEW
         }) {
+            
             menu.remove(&item)?;
-        }
+        }*/
 
         Ok(())
-    }
-}
-
-pub mod accelerators {
-
-    pub enum Keys {
-        CMD,
-        CTRL,
-        J,
-        A,
-        G,
-    }
-
-    impl From<Keys> for String {
-        fn from(value: Keys) -> Self {
-            match value {
-                Keys::CMD => String::from("CmdOrCtrl"),
-                Keys::CTRL => String::from("CmdOrCtrl"),
-                Keys::J => String::from("J"),
-                Keys::A => String::from("A"),
-                Keys::G => String::from("G"),
-            }
-        }
-    }
-
-    pub struct Accelerator(Vec<Keys>);
-
-    impl Accelerator {
-        pub(crate) fn of(keys: Vec<Keys>) -> Self {
-            Accelerator(keys)
-        }
-
-        pub(crate) fn build(self) -> Option<String> {
-            Some(self.into())
-        }
-    }
-
-    impl From<Accelerator> for String {
-        fn from(value: Accelerator) -> String {
-            let v: Vec<String> = value.0.into_iter().map(move |k| String::from(k)).collect();
-            v.join("+")
-        }
     }
 }
 
@@ -346,6 +315,7 @@ pub fn create_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
             &PredefinedMenuItem::separator(app)?,
             &reload(app)?,
             &PredefinedMenuItem::separator(app)?,
+            &quit(app)?,
         ],
     )?;
 

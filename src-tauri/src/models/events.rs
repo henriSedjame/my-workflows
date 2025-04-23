@@ -3,7 +3,7 @@ use crate::models::errors::AppErrors::EmitEventError;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
-trait Event {
+pub(crate) trait Event {
     fn name(&self) -> &'static str;
 }
 pub mod commands {
@@ -37,11 +37,14 @@ pub mod commands {
         },
         #[serde(rename_all = "camelCase")]
         CommandEnded {
-            duration: u128
+            duration: u128,
+            status_code: i32
         },
         #[serde(rename_all = "camelCase")]
         CommandFailed {
             errors_lines: Vec<String>,
+            duration: u128,
+            status_code: i32
         }
     }
    
