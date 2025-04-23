@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct AppConfig {
     pub variables: HashMap<String, String>,
     pub secrets: HashMap<String, String>,
+    pub path: String,
     pub navigations: Vec<Navigation>,
     pub commands: Vec<Cmd>,
 }

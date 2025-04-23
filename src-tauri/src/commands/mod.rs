@@ -18,10 +18,13 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
 
     let mut state_lock = state.lock().unwrap();
     
+    let path = state_lock.config.path.clone();
+    
+    let script = format!("export PATH={path} && {command_value}");
+    
     let mut command = Command::new("sh")
             .arg("-c")
-           
-            .arg(command_value.as_str())
+            .arg(script.as_str())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
