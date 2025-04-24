@@ -1,8 +1,8 @@
-
 use crate::models::events::commands::CommandExecutionEvent;
 
 use crate::models::events::commands::CommandExecutionEvent::{CommandEnded, CommandFailed, CommandProgress, CommandStarted};
 use crate::models::state::{AppState, RunningCommand};
+use crate::utils::process::get_command_process_ids;
 use crate::utils::{hide_main_view, update_tray_menu};
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
@@ -31,19 +31,20 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
             .spawn()?;
     
     state_lock.view_visible = true;
-
+    
     state_lock.running_commands.push(RunningCommand {
         command_id,
-        processs_id: command.id()
+        processs_ids: get_command_process_ids(command_value.as_str())?
     });
-
+    
+    
     tauri::async_runtime::spawn(async move {
         /* handle output */
         {
             let stdout = command.stdout.as_mut().unwrap();
             let stdout_reader = BufReader::new(stdout);
             let stdout_lines = stdout_reader.lines();
-
+            
             for line in stdout_lines.into_iter().flatten() {
                 channel.send(CommandProgress {
                     progress_line: line,
@@ -52,6 +53,8 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
         }
         
         let status = command.wait().unwrap();
+        
+        command.kill().unwrap();
         
         if status.success() {
             channel.send(CommandEnded { duration: start.elapsed().as_millis(), status_code: status.code().unwrap() }).unwrap();
@@ -84,6 +87,7 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
    
     tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
     
+    
     Ok(true)
 }
 
@@ -98,15 +102,18 @@ pub fn kill_command(command_id: String,app: AppHandle, state: State<'_, AppState
         let system = System::new_all();
         let command = state_lock.running_commands.get(index).unwrap();
         webview.eval("console.log('found command')")?;
-        if let Some(process) = system.process(Pid::from_u32(command.processs_id)) {
-            if process.kill() {
-                webview.eval("console.log('kill process')")?;
-                state_lock.running_commands.remove(index);
-            } else {
-                
-                webview.eval("console.log('fail to kill process')")?;
+        for pid in command.processs_ids.iter() {
+            if let Some(process) = system.process(Pid::from_u32(*pid)) {
+                if process.kill() {
+                    webview.eval("console.log('kill process')")?;
+                } else {
+                    webview.eval("console.log('fail to kill process')")?;
+                }
             }
         }
+
+        state_lock.running_commands.remove(index);
+        
     }
 
     Ok(true)

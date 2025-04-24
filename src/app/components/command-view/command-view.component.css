@@ -76,7 +76,7 @@
     position: relative;
 
     width: 100%;
-    max-height: calc(100% - (100px + var(--title-bar-height)));
+    max-height: calc(100% - (120px + var(--title-bar-height)));
     overflow-y: scroll;
     overflow-x: scroll;
     scrollbar-width: none;

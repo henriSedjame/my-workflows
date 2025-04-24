@@ -6,7 +6,7 @@ use tauri::menu::PredefinedMenuItem;
 
 pub(crate) mod cmd;
 pub(crate) mod config;
-
+pub(crate) mod process;
 
 pub fn show_main_view(app: &AppHandle) {
     let window = app.get_webview_window("main").unwrap();

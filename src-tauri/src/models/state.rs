@@ -8,7 +8,7 @@ use tauri::Wry;
 
 pub struct RunningCommand {
     pub command_id: String,
-    pub processs_id: u32,
+    pub processs_ids: Vec<u32>,
 }
 
 pub struct AppStateInner {

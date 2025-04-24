@@ -45,6 +45,8 @@ export class AppService {
                         this.appStore.commandEnded(commandId, message.data.duration, message.data.statusCode)
                         break;
                 }
+
+                console.log(message)
             }
 
             invoke<boolean>(EXECUTE_COMMAND, {
