@@ -56,9 +56,6 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
                 MenuItemIds::Commands => {}
                 MenuItemIds::Cmd { id, cmd } => match evaluate_cmd_value(app, cmd) {
                     Ok(cmd) => {
-
-                        println!("CMDER => {cmd:?}");
-                        
                         show_main_view(app);
 
                         emit_event(app, CommandRequested {

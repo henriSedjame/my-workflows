@@ -70,7 +70,7 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
                 channel.send(CommandFailed { 
                     errors_lines: lines, 
                     duration: start.elapsed().as_millis(),
-                    status_code: status.code().unwrap()
+                    status_code: status.code().or_else(||Some(-1)).unwrap()
                 }).unwrap();
             } else {
                 channel.send(CommandEnded { 

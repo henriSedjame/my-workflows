@@ -40,6 +40,7 @@ export class CommandViewComponent implements OnInit {
     commandClass = computed(() => ({
         'in-progress': this.command()?.status === 'in_progress',
         'cancelled': this.command()?.status === 'cancelled',
+        'errors': this.errorLines()?.length > 0,
     }))
 
     _e = effect(() => {

@@ -122,16 +122,6 @@
     margin-top: 5px;
 }
 
-.command-error-lines {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 5px 10px 10px 15px;
-    border-left: 4px solid var(--app-error-red);
-
-}
-
-
 .loader {
     height: 4px;
     width: 100%;

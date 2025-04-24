@@ -1,4 +1,4 @@
-<div class="dialog-container">
+<div data-tauri-drag-region class="dialog-container">
     <dialog>
 
         <div class="cmd-script">
@@ -9,13 +9,15 @@
         @if (params()) {
             @for (param of params(); track $index) {
                 <div class="param-bloc">
+                    @if (filledParams().includes(param.name)) {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                    }
                     <div class="param-name">
                         <span class="material-symbols-outlined setting-icon">settings</span>
                         {{param.name}}
                     </div>
                     <input class="param-input"
                             id="{{$index}}-{{param.name}}"
-                            [ngClass]="filledParams().includes(param.name) ? 'filled' : ''"
                             [placeholder]="placeholder(param.name)"
                             [value]="param.value ?? '' "
                             (input)="onInput(param.name)"
@@ -32,7 +34,7 @@
             <button (click)="cancel()" class="cancel-button">
                 Cancel
             </button>
-            <button [ngClass]="btnClass()" (click)="sendCommand()">
+            <button class="ok-button" [ngClass]="btnClass()" (click)="sendCommand()">
                 Run command
             </button>
         </div>

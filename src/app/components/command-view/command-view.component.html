@@ -23,7 +23,7 @@
                 </div>
             }
             @if (errorLines().length > 0) {
-                <div class="command-lines errors">
+                <div class="command-lines">
                     @for (line of errorLines(); track $index) {
                         <span class="command-line">{{ line }}</span>
                     }

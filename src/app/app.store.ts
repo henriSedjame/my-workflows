@@ -95,6 +95,7 @@ export const AppStore = signalStore(
                 this.closeTab(id)
             }
         },
+
         newCommand(id: string, value: string, label: string, script: string) {
 
             const commands = store.commands()
@@ -169,7 +170,6 @@ export const AppStore = signalStore(
         },
 
         commandEnded(id: string, duration: number, statusCode: number) {
-
             patchState(store, {
                 commands: this._updateCommands(
                     store.commands(),

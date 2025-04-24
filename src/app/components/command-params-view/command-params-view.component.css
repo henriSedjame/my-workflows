@@ -35,6 +35,7 @@ dialog {
 
 }
 .param-bloc {
+    position: relative;
     max-width: 90%;
     min-width: 80%;
     display: flex;
@@ -53,8 +54,20 @@ dialog {
 }
 
 .filled {
-    border: 2px solid var(--app-green);
+    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
 }
+
+.check-icon {
+    color: var(--app-green);
+    position: absolute;
+    right: 1px;
+    top: 26px;
+    padding: 2px;
+    border-radius: 50%;
+    background-color: var(--bg-color);
+    scale: 0.7;
+}
+
 input:focus {
     outline: none;
 }
@@ -93,27 +106,43 @@ button {
     height: 30px;
     border-radius: 5px;
     border: none;
-    background-color: #4c4c4c;
+
 
     font-size: 12px;
-    color: #9f9f9f;
 
-    cursor: not-allowed;
+
     margin-bottom: 25px;
     margin-top: 15px;
 }
 
-.ready {
-    cursor: pointer;
-    background-color: var(--app-green);
+.ok-button{
+    background-color: rgba(99, 131, 99, 0.66);
     color: var(--bg-color);
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &.ready {
+        cursor: pointer;
+        background-color: var(--app-green);
+        color: var(--bg-color);
+        opacity: 1;
+    }
+}
+
+.ready:hover {
+    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
 }
 
 .cancel-button {
-    background-color: #c6c5c5;
-    color: #606060;
+    background-color: grey;
+    color: white;
     cursor: pointer;
 }
+
+.cancel-button:hover {
+    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+}
+
 .msg {
     width: 100%;
     display: flex;
