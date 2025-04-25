@@ -1,63 +1,73 @@
 use crate::models::events::commands::CommandExecutionEvent;
 
-use crate::models::events::commands::CommandExecutionEvent::{CommandEnded, CommandFailed, CommandProgress, CommandStarted};
+use crate::models::events::commands::CommandExecutionEvent::{
+    CommandEnded, CommandFailed, CommandProgress, CommandStarted,
+};
 use crate::models::state::{AppState, RunningCommand};
 use crate::utils::process::get_command_process_ids;
 use crate::utils::{hide_main_view, update_tray_menu};
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::time::Instant;
-use sysinfo::{Pid, System};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 
 #[tauri::command]
-pub async fn execute_command(app: AppHandle, command_id: String, command_value: String, channel: tauri::ipc::Channel<CommandExecutionEvent>, state: State<'_, AppState>)  -> tauri::Result<bool> {
-    
+pub async fn execute_command(
+    app: AppHandle,
+    command_id: String,
+    command_value: String,
+    channel: tauri::ipc::Channel<CommandExecutionEvent>,
+    state: State<'_, AppState>,
+) -> tauri::Result<bool> {
     channel.send(CommandStarted)?;
-    
+
     let start = Instant::now();
 
     let mut state_lock = state.lock().unwrap();
-    
+
     let path = state_lock.config.path.clone();
-    
+
     let script = format!("export PATH={path} && {command_value}");
-    
+
     let mut command = Command::new("sh")
-            .arg("-c")
-            .arg(script.as_str())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-    
+        .arg("-c")
+        .arg(script.as_str())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
     state_lock.view_visible = true;
-    
+
     state_lock.running_commands.push(RunningCommand {
-        command_id,
-        processs_ids: get_command_process_ids(command_value.as_str())?
+        command_id: command_id.clone(),
+        command_value: command_value.clone(),
     });
-    
-    
+
     tauri::async_runtime::spawn(async move {
         /* handle output */
         {
             let stdout = command.stdout.as_mut().unwrap();
             let stdout_reader = BufReader::new(stdout);
             let stdout_lines = stdout_reader.lines();
-            
+
             for line in stdout_lines.into_iter().flatten() {
-                channel.send(CommandProgress {
-                    progress_line: line,
-                }).unwrap();
+                channel
+                    .send(CommandProgress {
+                        progress_line: line,
+                    })
+                    .unwrap();
             }
         }
-        
+
         let status = command.wait().unwrap();
-        
-        command.kill().unwrap();
-        
+
         if status.success() {
-            channel.send(CommandEnded { duration: start.elapsed().as_millis(), status_code: status.code().unwrap() }).unwrap();
+            channel
+                .send(CommandEnded {
+                    duration: start.elapsed().as_millis(),
+                    status_code: status.code().unwrap(),
+                })
+                .unwrap();
         } else {
             let stdout = command.stderr.as_mut().unwrap();
             let stdout_reader = BufReader::new(stdout);
@@ -70,50 +80,58 @@ pub async fn execute_command(app: AppHandle, command_id: String, command_value: 
             }
 
             if !lines.is_empty() {
-                channel.send(CommandFailed { 
-                    errors_lines: lines, 
-                    duration: start.elapsed().as_millis(),
-                    status_code: status.code().or_else(||Some(-1)).unwrap()
-                }).unwrap();
+                channel
+                    .send(CommandFailed {
+                        errors_lines: lines,
+                        duration: start.elapsed().as_millis(),
+                        status_code: status.code().or_else(|| Some(-1)).unwrap(),
+                    })
+                    .unwrap();
             } else {
-                channel.send(CommandEnded { 
-                    duration: start.elapsed().as_millis(), 
-                    status_code: status.code().or_else(||Some(-1)).unwrap()
-                }).unwrap();
+                channel
+                    .send(CommandEnded {
+                        duration: start.elapsed().as_millis(),
+                        status_code: status.code().or_else(|| Some(-1)).unwrap(),
+                    })
+                    .unwrap();
             }
         }
-        
     });
-   
-    tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
-    
-    
+
+    tauri::async_runtime::spawn(async move {
+        update_tray_menu(&app);
+    });
+
     Ok(true)
 }
 
 #[tauri::command]
-pub fn kill_command(command_id: String,app: AppHandle, state: State<'_, AppState>) -> tauri::Result<bool> {
-    let webview = app.get_webview_window("main").unwrap();
-    webview.eval("console.log('Start kill process')")?;
-    
+pub fn kill_command(
+    command_id: String,
+    state: State<'_, AppState>,
+) -> tauri::Result<bool> {
+   
     let mut state_lock = state.lock().unwrap();
-    if let Some(index) =  state_lock.running_commands.iter().position(|cmd| cmd.command_id == command_id) {
-        webview.eval("console.log('Found index')")?;
-        let system = System::new_all();
+    
+    if let Some(index) = state_lock
+        .running_commands
+        .iter()
+        .position(|cmd| cmd.command_id == command_id)
+    {
         let command = state_lock.running_commands.get(index).unwrap();
-        webview.eval("console.log('found command')")?;
-        for pid in command.processs_ids.iter() {
-            if let Some(process) = system.process(Pid::from_u32(*pid)) {
-                if process.kill() {
-                    webview.eval("console.log('kill process')")?;
-                } else {
-                    webview.eval("console.log('fail to kill process')")?;
-                }
-            }
+
+        let mut all_killed = true;
+
+        for pid in get_command_process_ids(command.command_value.as_str())? {
+            if nix::sys::signal::kill(
+                nix::unistd::Pid::from_raw(pid as i32),
+                Some(nix::sys::signal::Signal::SIGINT),
+            ).is_err() { all_killed = false; };
         }
 
-        state_lock.running_commands.remove(index);
-        
+        if all_killed {
+            state_lock.running_commands.remove(index);
+        }
     }
 
     Ok(true)
@@ -126,6 +144,8 @@ pub fn hide_view(app: AppHandle, state: State<'_, AppState>, open_tabs: bool) ->
         state_lock.view_visible = false;
     }
     hide_main_view(&app);
-    tauri::async_runtime::spawn(async move { update_tray_menu(&app); });
+    tauri::async_runtime::spawn(async move {
+        update_tray_menu(&app);
+    });
     Ok(())
 }

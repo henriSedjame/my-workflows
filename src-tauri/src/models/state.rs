@@ -8,14 +8,14 @@ use tauri::Wry;
 
 pub struct RunningCommand {
     pub command_id: String,
-    pub processs_ids: Vec<u32>,
+    pub command_value: String,
 }
 
 pub struct AppStateInner {
     pub config: AppConfig,
     pub menu: Option<Menu<Wry>>,
     pub running_commands: Vec<RunningCommand>,
-    pub view_visible: bool,
+    pub view_visible: bool
 }
 
 impl AppStateInner {
@@ -29,7 +29,7 @@ impl AppStateInner {
                 config,
                 menu: None,
                 running_commands: vec![],
-                view_visible: false,
+                view_visible: false
             }),
             Err(e) => {
                 println!("Config JSON => {}", e);
