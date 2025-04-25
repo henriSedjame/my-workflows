@@ -7,8 +7,8 @@ use tauri::menu::Menu;
 use tauri::Wry;
 
 pub struct RunningCommand {
-    pub command_id: String,
-    pub command_value: String,
+    pub uuid: String,
+    pub pid: u32
 }
 
 pub struct AppStateInner {

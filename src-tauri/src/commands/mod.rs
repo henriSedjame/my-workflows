@@ -4,12 +4,13 @@ use crate::models::events::commands::CommandExecutionEvent::{
     CommandEnded, CommandFailed, CommandProgress, CommandStarted,
 };
 use crate::models::state::{AppState, RunningCommand};
-use crate::utils::process::get_command_process_ids;
+use crate::utils::process::get_children;
 use crate::utils::{hide_main_view, update_tray_menu};
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::time::Instant;
 use tauri::{AppHandle, State};
+use crate::utils::cmd::PROGRAM_NAME;
 
 #[tauri::command]
 pub async fn execute_command(
@@ -29,18 +30,18 @@ pub async fn execute_command(
 
     let script = format!("export PATH={path} && {command_value}");
 
-    let mut command = Command::new("sh")
+    let mut command = Command::new(PROGRAM_NAME)
         .arg("-c")
         .arg(script.as_str())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-
+    
     state_lock.view_visible = true;
 
     state_lock.running_commands.push(RunningCommand {
-        command_id: command_id.clone(),
-        command_value: command_value.clone(),
+        uuid: command_id,
+        pid: command.id(),
     });
 
     tauri::async_runtime::spawn(async move {
@@ -110,28 +111,27 @@ pub fn kill_command(
     command_id: String,
     state: State<'_, AppState>,
 ) -> tauri::Result<bool> {
-   
+    
     let mut state_lock = state.lock().unwrap();
     
     if let Some(index) = state_lock
         .running_commands
         .iter()
-        .position(|cmd| cmd.command_id == command_id)
+        .position(|cmd| cmd.uuid == command_id)
     {
         let command = state_lock.running_commands.get(index).unwrap();
-
-        let mut all_killed = true;
-
-        for pid in get_command_process_ids(command.command_value.as_str())? {
+        
+        get_children(command.pid, &sysinfo::System::new_all())?.iter().for_each(|pid| {
             if nix::sys::signal::kill(
-                nix::unistd::Pid::from_raw(pid as i32),
+                nix::unistd::Pid::from_raw(*pid as i32),
                 Some(nix::sys::signal::Signal::SIGINT),
-            ).is_err() { all_killed = false; };
-        }
-
-        if all_killed {
-            state_lock.running_commands.remove(index);
-        }
+            ).is_err() { 
+                println!("Failed to kill {}", pid);
+            };
+        });
+        
+        state_lock.running_commands.remove(index);
+        
     }
 
     Ok(true)

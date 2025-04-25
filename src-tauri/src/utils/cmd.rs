@@ -1,25 +1,10 @@
 use std::process::{Command, Output};
-
 use crate::models::errors::AppErrors;
 use crate::models::state::AppState;
 use regex::Captures;
 use tauri::{AppHandle, Manager};
+pub(crate) use crate::utils::constants::{ENVS, ENV_PREFIX, VARS, VARS_PREFIX, SECRETS, SECRETS_PREFIX, PARAMS, PARAM_PREFIX, SUFFIX, MODIFIED_SECRET, PROGRAM_NAME};
 
-pub const PROGRAM_NAME: &str = "sh";
-
-pub const ENVS: &str = "envs";
-pub const VARS: &str = "variables";
-pub const SECRETS: &str = "secrets";
-pub const PARAMS: &str = "params";
-
-pub const ENV_PREFIX: &str = "${env.";
-pub const VARS_PREFIX: &str = "${vars.";
-pub const SECRETS_PREFIX: &str = "${secrets.";
-pub const PARAM_PREFIX: &str = "${param.";
-
-pub const MODIFIED_SECRET: &str = "•••••••••";
-
-pub const SUFFIX: &str = "}";
 
 
 #[derive(Debug)]
