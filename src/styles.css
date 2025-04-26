@@ -1,5 +1,16 @@
 :root {
-    font-family: Dialog,  Arial, sans-serif;
+    /* COLORS */
+    --primary-color : white;
+    --secondary-color : #2c2b2b;
+    --ternary-color : #341464;
+
+    --thin-line-color: rgba(44, 43, 43, 0.18);
+
+    --text-color : #2c2b2b;
+
+    /* SHADOW */
+    --box-shadow: 1px 3px 2px rgba(55, 55, 55, 0.53);
+
     font-size: 14px;
     line-height: 24px;
     font-weight: 400;
@@ -20,9 +31,9 @@
     --title-bar-color: transparent;
 
     /* COLORS */
-    --bg-color: rgba(32, 34, 30, 0.91);
+    --bg-color: white;
     --app-green: #7aff4e;
-    --app-red: #371D1D7C;
+    --app-red: rgba(243, 176, 176, 0.31);
     --app-success-green: #4eb354;
     --app-error-red: #bd1532;
     --app-progress-yellow: #e3c347;
@@ -46,6 +57,8 @@ html, body {
     border-style: solid;
     border-width: 1px;
     overflow: hidden;
+
+    font-family: Abel, Arial, Helvetica, sans-serif;
 
 }
 

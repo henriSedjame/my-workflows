@@ -52,7 +52,7 @@ export class CommandViewComponent implements OnInit {
         if (elmt) {
             elmt.scroll({
                 behavior: 'smooth',
-                top: elmt.scrollHeight + 40
+                top: elmt.scrollHeight
             })
         }
     })

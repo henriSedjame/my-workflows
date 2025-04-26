@@ -1,14 +1,17 @@
 <div data-tauri-drag-region class="titlebar">
 
     <div class="titlebar-button-container">
-        <!--<div class="titlebar-button" [ngClass]="activeBtnClass()" id="titlebar-close"
-        (click)="appWindow.hide()"></div>-->
+
         <div class="titlebar-button"  [ngClass]="activeBtnClass()" id="titlebar-minimize"
         (click)="hideView()">
             <span class="material-symbols-outlined icon">remove</span>
         </div>
-        <!--<div class="titlebar-button"  [ngClass]="activeBtnClass()" id="titlebar-maximize"
-        (click)="appWindow.toggleMaximize()"></div>-->
+
+
+    </div>
+
+    <div class="app-icon-container">
+        <img src="assets/icon.png" class="app-icon" alt="app icon">
     </div>
 
     <div class="tabs-container">

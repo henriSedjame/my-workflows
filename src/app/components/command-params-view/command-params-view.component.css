@@ -2,7 +2,7 @@ dialog {
     position: fixed;
     top: calc(50% - 75px);
     z-index: 100;
-    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+    box-shadow: var(--box-shadow);
     border: none;
     border-radius: 20px;
     background-color: var(--bg-color);
@@ -14,6 +14,7 @@ dialog {
     justify-content: center;
     align-items: center;
     padding: 0 25px ;
+    min-width: 60%;
     max-width: 80%;
 }
 
@@ -25,7 +26,7 @@ dialog {
     color: var(--bg-color);
     font-style: italic;
     text-align: center;
-    background-color: lightgray;
+    background-color: var(--secondary-color);
     position: relative;
 }
 
@@ -36,8 +37,7 @@ dialog {
 }
 .param-bloc {
     position: relative;
-    max-width: 90%;
-    min-width: 80%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -48,9 +48,9 @@ dialog {
     height: 30px;
     margin-bottom:15px ;
     border-radius: 10px;
-    padding-left: 5px;
-    font-size: 12px;
-    border: none;
+    padding-left: 10px;
+    font-size: 14px;
+    border: 1px solid var(--thin-line-color);
 }
 
 .filled {
@@ -75,7 +75,7 @@ input:focus {
 input::placeholder {
     color: #7e7d7d;
     font-style: italic;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .param-name {
@@ -94,9 +94,10 @@ input::placeholder {
     scale: 0.7
 }
 .buttons {
+    width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
     gap: 15px;
 }
@@ -116,31 +117,29 @@ button {
 }
 
 .ok-button{
-    background-color: rgba(99, 131, 99, 0.66);
+    background-color: var(--secondary-color);
     color: var(--bg-color);
     opacity: 0.5;
     cursor: not-allowed;
 
     &.ready {
         cursor: pointer;
-        background-color: var(--app-green);
-        color: var(--bg-color);
         opacity: 1;
     }
 }
 
 .ready:hover {
-    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+    box-shadow: var(--box-shadow);
 }
 
 .cancel-button {
-    background-color: grey;
-    color: white;
+    background-color: lightgray;
+    color: dimgrey;
     cursor: pointer;
 }
 
 .cancel-button:hover {
-    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+    box-shadow: var(--box-shadow);
 }
 
 .msg {
@@ -152,13 +151,13 @@ button {
     font-size: 12px;
     color: grey;
     margin-top: 10px;
-    background-color: rgba(211, 211, 211, 0.17);
+    background-color: rgba(211, 211, 211, 0.25);
 }
 
 .enter-btn {
     scale: 0.7;
     padding: 2px;
-    background-color: lightgray;
+    background-color: var(--secondary-color);
     color: var(--bg-color);
     border-radius: 5px;
 }

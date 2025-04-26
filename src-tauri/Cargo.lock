@@ -1081,6 +1081,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "flows"
+version = "0.1.0"
+dependencies = [
+ "nix",
+ "open",
+ "regex",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "thiserror 2.0.12",
+ "uuid",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2209,27 +2230,6 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "my-workflows"
-version = "0.1.0"
-dependencies = [
- "nix",
- "open",
- "regex",
- "serde",
- "serde_json",
- "sysinfo",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "thiserror 2.0.12",
- "uuid",
 ]
 
 [[package]]

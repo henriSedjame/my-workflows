@@ -6,7 +6,7 @@
     "analytics": false
   },
   "projects": {
-    "my-workflows": {
+    "flows": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -15,7 +15,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/my-workflows",
+            "outputPath": "dist/flows",
             "index": "src/index.html",
             "browser": "src/main.ts",
 
@@ -56,10 +56,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "my-workflows:build:production"
+              "buildTarget": "flows:build:production"
             },
             "development": {
-              "buildTarget": "my-workflows:build:development"
+              "buildTarget": "flows:build:development"
             }
           },
           "defaultConfiguration": "development"

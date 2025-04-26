@@ -28,7 +28,7 @@ pub async fn execute_command(
 
     let path = state_lock.config.path.clone();
 
-    let script = format!("export PATH={path} && {command_value}");
+    let script = format!("export PATH='{path}' && {command_value}");
 
     let mut command = Command::new(PROGRAM_NAME)
         .arg("-c")

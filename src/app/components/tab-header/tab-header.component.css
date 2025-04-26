@@ -1,5 +1,5 @@
 .tab {
-    font-family: Chalkboard, Arial, Helvetica, sans-serif;
+
     color: grey;
 
     display: flex;
@@ -16,15 +16,15 @@
 
 .inactive-tab:hover {
     cursor: pointer;
-    background-color: rgba(198, 253, 164, 0.35);
-    color: #313927;
+
+    background-color: var(--thin-line-color);
+    border: none;
+    height: calc(var(--title-bar-height) + 2px);
 }
 
 .active-tab {
-    /*background-color: var(--app-green);*/
-    color: white;
-    border-bottom: 2px solid var(--app-green);
-    box-shadow: 1px 2px 0 1px rgba(14, 14, 14, 0.55);
+    color:  var(--text-color);
+    border-bottom: 2px solid var(--ternary-color);
 }
 
 .close-btn {
@@ -33,6 +33,11 @@
 }
 
 .close-btn:hover {
-    color: white;
+    color: var(--secondary-color);
     cursor: pointer;
+}
+
+.script_icon {
+    margin-right: 4px;
+    font-size: 12px;
 }

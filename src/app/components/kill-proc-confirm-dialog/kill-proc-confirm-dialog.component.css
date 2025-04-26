@@ -3,12 +3,12 @@ dialog {
     position: fixed;
     top: calc(50% - 75px);
     z-index: 100;
-    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+    box-shadow: var(--box-shadow);
     border: none;
     border-radius: 20px;
     background-color: var(--bg-color);
 
-    color: white;
+    color: var(--text-color);
     height: 180px;
     display: flex;
     flex-direction: column;
@@ -30,7 +30,6 @@ dialog {
     justify-content: center;
     align-items: center;
     margin-bottom: 25px;
-
 
     font-size: 14px;
     letter-spacing: 1px;
@@ -57,15 +56,15 @@ button {
 }
 
 button:hover {
-    box-shadow: 2px 4px 10px 2px rgb(11, 11, 11);
+    box-shadow: var(--box-shadow);
 }
 
 .cancel-button {
-    background-color: grey;
-    color: white;
+    background-color: lightgray;
+    color: dimgrey;
 }
 
 .ok-button {
-    background-color: var(--app-green);
+    background-color: var(--secondary-color);
     color: var(--bg-color);
 }

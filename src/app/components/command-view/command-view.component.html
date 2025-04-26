@@ -14,9 +14,9 @@
             </div>
         }
 
-        <div class="command-result" [ngClass]="commandClass()" >
+        <div class="command-result" [ngClass]="commandClass()" #command_result>
             @if (lines().length > 0) {
-                <div class="command-lines" #command_result>
+                <div class="command-lines" >
                     @for (line of lines(); track $index) {
                         <span class="command-line">{{ line }}</span>
                     }

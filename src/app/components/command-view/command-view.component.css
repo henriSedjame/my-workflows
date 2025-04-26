@@ -23,7 +23,7 @@
 
 .not-found-msg {
     font-size: 18px;
-    font-family: Beirut, sans-serif;
+
 }
 
 .command-container {
@@ -46,7 +46,7 @@
     align-items: center;
     justify-content: start;
     margin-left: 20px;
-    /*padding: calc(var(--title-bar-height) + 5px) 0 8px 0;*/
+    color: var(--text-color);
 }
 
 .tilde {
@@ -74,7 +74,6 @@
 
 .command-result {
     position: relative;
-
     width: 100%;
     max-height: calc(100% - (120px + var(--title-bar-height)));
     overflow-y: scroll;
@@ -106,14 +105,12 @@
     display: flex;
     flex-direction: column;
     margin: 20px 15px;
-
-
 }
 
 .command-line {
-    font-family: Avenir, Helvetica, Arial, sans-serif;
     letter-spacing: 2px;
     font-style: italic;
+    color:  var(--text-color);
 }
 
 .bottom-spaced {
@@ -154,7 +151,7 @@
     opacity: 0.5;
 
     .btn {
-        background-color: #6e6e6e;
+        background-color: var(--secondary-color);
         border-radius: 3px;
         padding: 2px;
         width: 20px;
@@ -176,20 +173,14 @@
     .cmd-key {
         scale: 0.7;
     }
+
     .msg {
         margin-right: 10px;
         letter-spacing: 2px;
         font-size: 10pt;
-        opacity: 0.5;
+        opacity: 0.8;
+        color:  var(--text-color);
     }
-
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0,
-        'wght' 400,
-        'GRAD' 0,
-        'opsz' 40
-    }
-
 }
 
 .replay-btn {
@@ -205,8 +196,10 @@
     cursor: pointer;
     opacity: 0.5;
 
+    box-shadow: var(--box-shadow);
+
     .replay-icon {
-        color: var(--bg-color);
+        color: var(--secondary-color);
     }
 
     .replay-text {
@@ -215,11 +208,10 @@
 }
 
 .replay-btn:hover {
-    box-shadow: 2px 4px 3px 2px rgb(11, 11, 11);
     opacity: 1;
     .replay-text {
         display: block;
-        color: var(--bg-color);
+        color: var(--text-color);
         font-size: 7pt;
         margin-left: 3px;
     }
