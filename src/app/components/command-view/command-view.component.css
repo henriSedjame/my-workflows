@@ -50,7 +50,7 @@
 }
 
 .tilde {
-    color: #981dff;
+    color: var(--ternary-color);
     font-size: 18px;
     margin-right: 5px;
 }
@@ -87,7 +87,7 @@
 
     &.errors {
         border-left: 4px solid var(--app-error-red);
-        background-color: var(--app-red);
+        background-color: #F3B0B04F
     }
 
     &.in-progress {
@@ -151,17 +151,16 @@
     opacity: 0.5;
 
     .btn {
-        background-color: var(--secondary-color);
+        background-color: lightgray;
         border-radius: 3px;
         padding: 2px;
         width: 20px;
         height: 20px;
-
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        margin-right: 5px;
+        color: var(--secondary-color);
+        margin-right: 2px;
     }
 
     .k-letter {
@@ -211,7 +210,7 @@
     opacity: 1;
     .replay-text {
         display: block;
-        color: var(--text-color);
+        color: var(--secondary-color);
         font-size: 7pt;
         margin-left: 3px;
     }

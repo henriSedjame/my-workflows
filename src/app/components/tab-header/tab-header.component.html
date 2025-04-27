@@ -2,8 +2,12 @@
      [ngClass]="activeTabClass()"
      (click)="appStore.setCurrentTab(tab())"
 >
-    <span></span>
-    <span> <span class="script_icon">>_</span>  {{tab().label}} </span>
+
+    <span class="material-symbols-outlined term-icon">terminal</span>
+
+    <div class="tab-label">{{ tab().label }}</div>
+
     <span class="material-symbols-outlined close-btn" (click)="closeTab($event)">close</span>
+
 </div>
 

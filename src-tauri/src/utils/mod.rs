@@ -50,5 +50,4 @@ pub fn update_tray_menu(app: &AppHandle) {
         
         app.tray_by_id(TRAY_ID).unwrap().set_menu(Some(menu)).unwrap();
     }
-    
 }

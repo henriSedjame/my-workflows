@@ -88,8 +88,7 @@ export const AppStore = signalStore(
         cancelNextCommandParams() {
             const id = store.currentTab()
             patchState(store, {
-                nextCommandParams: undefined,
-                currentTab: undefined
+                nextCommandParams: undefined
             })
             if (id) {
                 this.closeTab(id)

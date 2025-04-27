@@ -2,20 +2,23 @@
     /* COLORS */
     --primary-color : white;
     --secondary-color : #2c2b2b;
-    --ternary-color : #341464;
+    --ternary-color : #4b1d8e;
 
-    --thin-line-color: rgba(44, 43, 43, 0.18);
+    --app-success-green: #4eb354;
+    --app-error-red: #bd1532;
+    --app-progress-yellow: #e3c347;
+    --btn-yellow: #FDBD3F;
+    --thin-line-color: rgba(62, 60, 60, 0.35);
 
-    --text-color : #2c2b2b;
+    --text-color : #cccca4;
+    --bg-color: #282629;
 
     /* SHADOW */
-    --box-shadow: 1px 3px 2px rgba(55, 55, 55, 0.53);
+    --box-shadow: 2px 3px 2px rgb(18, 16, 16);
 
     font-size: 14px;
     line-height: 24px;
     font-weight: 400;
-
-
 
     width: 100%;
     height: 100vh;
@@ -31,22 +34,14 @@
     --title-bar-color: transparent;
 
     /* COLORS */
-    --bg-color: white;
-    --app-green: #7aff4e;
-    --app-red: rgba(243, 176, 176, 0.31);
-    --app-success-green: #4eb354;
-    --app-error-red: #bd1532;
-    --app-progress-yellow: #e3c347;
-    --app-thin-white: #FFFFFF11;
-    --btn-red: #FC615D;
-    --btn-green: #35C84A;
-    --btn-yellow: #FDBD3F;
+
+
+
 }
 
 html, body {
 
     width: 100%;
-
 
     margin: 0;
 

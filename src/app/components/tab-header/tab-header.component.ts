@@ -5,9 +5,9 @@ import {Tab} from "../../app.models";
 
 @Component({
   selector: 'app-tab-header',
-  imports: [
-    NgClass
-  ],
+    imports: [
+        NgClass,
+    ],
   templateUrl: './tab-header.component.html',
   styleUrl: './tab-header.component.css'
 })

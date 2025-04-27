@@ -9,14 +9,21 @@
     justify-content: space-between;
     align-items: center;
 
-    border-right: 1px var(--app-thin-white) solid;
 
     cursor: default;
 }
 
+.tab-label {
+    width: 150px;
+    height: 25px;
+
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+}
 .inactive-tab:hover {
     cursor: pointer;
-
     background-color: var(--thin-line-color);
     border: none;
     height: calc(var(--title-bar-height) + 2px);
@@ -28,6 +35,7 @@
 }
 
 .close-btn {
+
     color: grey;
     scale: 0.8;
 }
@@ -38,6 +46,13 @@
 }
 
 .script_icon {
+
     margin-right: 4px;
     font-size: 12px;
+}
+
+
+.term-icon {
+    scale: 0.7;
+    opacity: 0.5;
 }

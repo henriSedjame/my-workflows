@@ -10,7 +10,8 @@
     left: 0;
     right: 0;
     z-index: 100;
-    padding: 0 12px;
+    padding: 0 20px;
+    border: 1px solid var(--thin-line-color);
 }
 
 .titlebar-button-container {
@@ -31,8 +32,9 @@
     -webkit-user-select: none;
 
     .icon {
-        color: black;
-        scale: 0.6;
+        width: 7px;
+        height: 1.5px;
+        background-color: var(--bg-color);
         opacity: 0;
         cursor: default;
     }
@@ -54,19 +56,22 @@
     overflow-x: scroll;
     scrollbar-width: none;
 }
-.app-icon-container {
-    height:  calc(var(--title-bar-height) - 2px);
 
+.app-icon-container {
+    height:  calc(var(--title-bar-height) - 10px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 6px;
-    margin-left: 15px;
+    padding: 0 4px;
+    margin-left:10px;
+    border: 1px solid var(--thin-line-color);
 
     border-radius: 4px;
-    box-shadow:  0 1px 3px rgba(34, 34, 34, 0.37), 0 1px 2px rgba(0, 0, 0, 0.45);
+
+    box-shadow: var(--box-shadow);
+
 }
 .app-icon {
-    scale: 0.8;
-
+    scale: 0.5;
+    opacity: 0.7;
 }
