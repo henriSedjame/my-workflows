@@ -2,7 +2,7 @@ use crate::models::events::commands::CommandRequested;
 use crate::models::events::emit_event;
 use crate::tray::menu::{create_menu, menu_items::{id_values, MenuItemIds}};
 use crate::utils::cmd::{evaluate_cmd_value, execute_cmd};
-use crate::utils::config::{get_config_path};
+use crate::utils::config::{get_config_dir_path, get_config_path};
 
 use tauri::image::Image;
 use tauri::menu::MenuEvent;
@@ -29,7 +29,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
             match id {
                 MenuItemIds::Quit => close_main_view(app),
                 MenuItemIds::Config => {
-                    if let Ok(path) = get_config_path() {
+                    if let Ok(path) = get_config_dir_path() {
                         let cmd = format!("open {}", path);
                         let cmd = cmd.as_str();
 

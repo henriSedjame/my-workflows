@@ -10,6 +10,12 @@ pub fn get_home_dir() -> Result<String, AppErrors> {
     Ok(String::from_utf8(pwd.stdout)?.trim().to_string())
 }
 
+/// Get configuration directory path
+pub fn get_config_dir_path() -> Result<String, AppErrors> {
+    let home_path = get_home_dir()?;
+    Ok(format!("{home_path}/{WF_APP_DIR}"))
+}
+
 /// Get configuration file path
 pub fn get_config_path() -> Result<String, AppErrors> {
     let home_path = get_home_dir()?;
