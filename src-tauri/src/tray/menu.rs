@@ -4,21 +4,22 @@ use tauri::menu::{Menu, PredefinedMenuItem};
 use tauri::{AppHandle, Manager, Wry};
 
 pub mod menu_items {
+    use crate::models::errors::AppErrors;
     use crate::models::state::AppState;
     use crate::utils::config::get_config_icons_path;
     use std::fmt::Display;
     use tauri::image::Image;
-    use tauri::menu::{
-        IconMenuItem, Menu, MenuId, MenuItem, Submenu, SubmenuBuilder,
-    };
+    use tauri::menu::{IconMenuItem, Menu, MenuId, MenuItem, MenuItemKind, Submenu, SubmenuBuilder};
     use tauri::{AppHandle, Error, Manager, Wry};
+    use tauri::Error::UnknownPath;
+    use crate::models::config::AppConfig;
 
     pub mod id_values {
         pub const QUIT: &str = "Quit";
 
         pub const CONFIG: &str = "Config";
 
-        pub const RELOAD: &str = "Reload";
+        pub const RELOAD: &str = "ReloadConfig";
 
         pub const NAVIGATIONS: &str = "Navigations";
 
@@ -38,7 +39,7 @@ pub mod menu_items {
 
         pub const CONFIG: &str = "Open configuration";
 
-        pub const RELOAD: &str = "Reload app";
+        pub const RELOAD_CONFIG: &str = "Reload configuration";
 
         pub const NAVIGATIONS: &str = "Navigate to ... ";
 
@@ -56,7 +57,7 @@ pub mod menu_items {
     pub enum MenuItemIds {
         Quit,
         Config,
-        Reload,
+        ReloadConfig,
         Navigations,
         Commands,
         ShowView,
@@ -70,7 +71,7 @@ pub mod menu_items {
             match self {
                 MenuItemIds::Quit => write!(f, "{}", id_values::QUIT)?,
                 MenuItemIds::Config => write!(f, "{}", id_values::CONFIG)?,
-                MenuItemIds::Reload => write!(f, "{}", id_values::RELOAD)?,
+                MenuItemIds::ReloadConfig => write!(f, "{}", id_values::RELOAD)?,
                 MenuItemIds::Navigations => write!(f, "{}", id_values::NAVIGATIONS)?,
                 MenuItemIds::Commands => write!(f, "{}", id_values::COMMANDS)?,
                 MenuItemIds::ShowView => write!(f, "{}", id_values::SHOW_VIEW)?,
@@ -90,7 +91,7 @@ pub mod menu_items {
             match id.0.as_str() {
                 id_values::QUIT => MenuItemIds::Quit,
                 id_values::CONFIG => MenuItemIds::Config,
-                id_values::RELOAD => MenuItemIds::Reload,
+                id_values::RELOAD => MenuItemIds::ReloadConfig,
                 id_values::NAVIGATIONS => MenuItemIds::Navigations,
                 id_values::COMMANDS => MenuItemIds::Commands,
                 id_values::SHOW_VIEW => MenuItemIds::ShowView,
@@ -140,49 +141,55 @@ pub mod menu_items {
         let icon = Image::from_bytes(include_bytes!("../../icons/reload.png")).ok();
         IconMenuItem::with_id(
             app,
-            MenuItemIds::Reload,
-            texts::RELOAD,
+            MenuItemIds::ReloadConfig,
+            texts::RELOAD_CONFIG,
             true,
             icon,
             None::<&str>,
         )
     }
 
-    pub fn navigations(app: &AppHandle) -> tauri::Result<Submenu<Wry>> {
+    pub fn navigations(app: &AppHandle, config: Option<AppConfig>) -> tauri::Result<Submenu<Wry>> {
         let sb =
             SubmenuBuilder::with_id(app, MenuItemIds::Navigations, texts::NAVIGATIONS).build()?;
-        let state = app.state::<AppState>();
-
-        state
-            .lock()
-            .unwrap()
-            .config
-            .navigations
-            .clone()
-            .into_iter()
-            .for_each(|nav| {
-                let name = nav.name;
-                let url = nav.url;
-                match nav.icon {
-                    None => {
-                        if let Ok(item) = navigation_item(app, name, url) {
-                            sb.append(&item).expect("");
-                        }
-                    }
-                    Some(icon) => {
-                        let path = get_config_icons_path(icon).unwrap();
-                        if let Ok(item) = navigation_icon_item(app, name, url, path.clone()) {
-                            sb.append(&item).expect("Failed to add");
-                        }
+        
+        let navigations = if let Some(config) = config {
+            config.navigations
+        } else {
+            let state = app.state::<AppState>();
+            let state_lock = state.lock().unwrap();
+            state_lock.config.navigations.clone()
+        };
+        
+        for nav in navigations.into_iter() {
+            let name = nav.name;
+            let url = nav.url;
+            let icon = match nav.icon {
+                None => Image::from_bytes(include_bytes!("../../icons/default-web.png")).ok(),
+                Some(icon) => {
+                    let path = get_config_icons_path(icon).unwrap();
+                    match std::fs::read(path) {
+                        Ok(icon) => Image::from_bytes(&icon).ok(),
+                        Err(_) => return Err(UnknownPath),
                     }
                 }
-            });
+            };
+
+            if let Ok(item) = navigation_icon_item(app, name, url, icon) {
+                sb.append(&item).expect("Failed to add");
+            }
+        }
 
         Ok(sb)
     }
-
-    fn navigation_item(app: &AppHandle, name: String, url: String) -> tauri::Result<MenuItem<Wry>> {
-        MenuItem::with_id(
+    
+    fn navigation_icon_item(
+        app: &AppHandle,
+        name: String,
+        url: String,
+        icon: Option<Image>,
+    ) -> tauri::Result<IconMenuItem<Wry>> {
+        IconMenuItem::with_id(
             app,
             MenuItemIds::Open {
                 id: format!("{}{}", id_values::OPEN, name.clone()),
@@ -190,42 +197,24 @@ pub mod menu_items {
             },
             name.clone().as_str().to_uppercase(),
             true,
+            icon,
             None::<&str>,
         )
     }
 
-    fn navigation_icon_item(
-        app: &AppHandle,
-        name: String,
-        url: String,
-        icon_path: String,
-    ) -> tauri::Result<IconMenuItem<Wry>> {
-        match std::fs::read(icon_path.clone()) {
-            Ok(icon) => IconMenuItem::with_id(
-                app,
-                MenuItemIds::Open {
-                    id: format!("{}{}", id_values::OPEN, name.clone()),
-                    url,
-                },
-                name.clone().as_str().to_uppercase(),
-                true,
-                Some(Image::from_bytes(&icon)?),
-                None::<&str>,
-            ),
-            Err(_e) => Err(Error::UnknownPath),
-        }
-    }
-
-    pub fn commands(app: &AppHandle) -> tauri::Result<Submenu<Wry>> {
+    pub fn commands(app: &AppHandle, config: Option<AppConfig>) -> tauri::Result<Submenu<Wry>> {
         let sb = SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS).build()?;
         let state = app.state::<AppState>();
 
-        state
-            .lock()
-            .unwrap()
-            .config
-            .commands
-            .clone()
+        let commands = if let Some(config) = config {
+            config.commands
+        } else {
+            let state = app.state::<AppState>();
+            let state_lock = state.lock().unwrap();
+            state_lock.config.commands.clone()
+        };
+        
+       commands
             .into_iter()
             .for_each(|command| {
                 let name = command.name;
@@ -237,6 +226,7 @@ pub mod menu_items {
 
         Ok(sb)
     }
+
     fn command_item(
         app: &AppHandle,
         name: String,
@@ -278,20 +268,44 @@ pub mod menu_items {
         )
     }
 
+    
+    
     pub fn remove_show_hide_view_item(menu: &Menu<Wry>) -> tauri::Result<()> {
         let items = menu.items()?;
 
-       if let Some(p) =  items.iter().position(|item| {
+        if let Some(p) = items.iter().position(|item| {
             let menu_id = item.id();
             menu_id.0.as_str() == id_values::SHOW_VIEW || menu_id.0.as_str() == id_values::HIDE_VIEW
-        }){
-           let item = items.get(p).unwrap();
-           let sep_item = items.get(p + 1).unwrap();
-           menu.remove(item)?;
-           menu.remove(sep_item)?;
-       };
-        
+        }) {
+            let item = items.get(p).unwrap();
+            let sep_item = items.get(p + 1).unwrap();
+            menu.remove(item)?;
+            menu.remove(sep_item)?;
+        };
+
         Ok(())
+    }
+
+    fn remove_items(menu: &Menu<Wry>, id_value: &str) -> tauri::Result<usize> {
+        let items = menu.items()?;
+        if let Some(p) = items.iter().position(|item| {
+            let menu_id = item.id();
+            menu_id.0.as_str() == id_value
+        }){
+            let item = items.get(p).unwrap();
+            menu.remove(item)?;
+            Ok(p)
+        } else {
+            Ok(0)
+        }
+    }
+    
+    pub fn remove_navigation_items(menu: &Menu<Wry>) -> tauri::Result<usize> {
+        remove_items(menu, id_values::NAVIGATIONS)
+    }
+
+    pub fn remove_command_items(menu: &Menu<Wry>) -> tauri::Result<usize> {
+        remove_items(menu, id_values::COMMANDS)
     }
 }
 
@@ -299,9 +313,9 @@ pub fn create_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let menu = Menu::with_items(
         app,
         &[
-            &navigations(app)?,
+            &navigations(app, None)?,
             &PredefinedMenuItem::separator(app)?,
-            &commands(app)?,
+            &commands(app, None)?,
             &PredefinedMenuItem::separator(app)?,
             &config(app)?,
             &PredefinedMenuItem::separator(app)?,

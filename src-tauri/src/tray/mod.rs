@@ -2,7 +2,7 @@ use crate::models::events::commands::CommandRequested;
 use crate::models::events::emit_event;
 use crate::tray::menu::{create_menu, menu_items::{id_values, MenuItemIds}};
 use crate::utils::cmd::{evaluate_cmd_value, execute_cmd};
-use crate::utils::config::{get_config_dir_path, get_config_path};
+use crate::utils::config::{get_config_dir_path};
 
 use tauri::image::Image;
 use tauri::menu::MenuEvent;
@@ -11,7 +11,7 @@ use tauri::AppHandle;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use uuid::Uuid;
 
-use crate::utils::{close_main_view, hide_main_view, show_main_view, update_tray_menu};
+use crate::utils::{close_main_view, hide_main_view, show_main_view, update_config_menu, update_tray_menu};
 
 pub(crate) mod menu;
 
@@ -35,14 +35,14 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
 
                         execute_cmd(cmd, |_|{}, || {
                             app.dialog()
-                                .message("Failed to open configuration file")
+                                .message("Failed to open configuration directory.")
                                 .title("⚙️OPEN CONFIGURATION")
                                 .kind(MessageDialogKind::Error)
                                 .blocking_show();
                         });
                     };
                 }
-                MenuItemIds::Reload => app.restart(),
+                MenuItemIds::ReloadConfig => update_config_menu(app),
                 MenuItemIds::ShowView => {
                     show_main_view(app);
                     update_tray_menu(&app);

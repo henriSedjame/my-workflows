@@ -10,7 +10,7 @@ pub fn get_home_dir() -> Result<String, AppErrors> {
     Ok(String::from_utf8(pwd.stdout)?.trim().to_string())
 }
 
-/// Get configuration directory path
+/// Get the configuration directory path
 pub fn get_config_dir_path() -> Result<String, AppErrors> {
     let home_path = get_home_dir()?;
     Ok(format!("{home_path}/{WF_APP_DIR}"))
@@ -58,4 +58,12 @@ pub fn get_config_icons_path(icon: String) -> Result<String, AppErrors> {
     let home_dir = get_home_dir()?;
     let path = format!("{home_dir}/{WF_APP_DIR}/{ICONS_DIR}/{icon}");
     Ok(path)
+}
+
+
+pub fn get_config() -> Result<AppConfig, AppErrors> {
+    let config_path = get_config_path()?;
+    let config_file = fs::File::open(config_path)?;
+    let config: AppConfig = serde_json::from_reader(config_file)?;
+    Ok(config)
 }
