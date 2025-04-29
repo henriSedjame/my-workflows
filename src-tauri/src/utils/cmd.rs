@@ -1,8 +1,10 @@
+use std::io;
 use std::process::{Command, Output};
 use crate::models::errors::AppErrors;
 use crate::models::state::AppState;
 use regex::Captures;
 use tauri::{AppHandle, Manager};
+use crate::models::errors::AppErrors::{CommandFailed, FailedToExecuteCommand};
 pub(crate) use crate::utils::constants::{ENVS, ENV_PREFIX, VARS, VARS_PREFIX, SECRETS, SECRETS_PREFIX, PARAMS, PARAM_PREFIX, SUFFIX, MODIFIED_SECRET, PROGRAM_NAME};
 
 
@@ -32,46 +34,42 @@ pub fn evaluate_cmd_value(app: &AppHandle, cmd: String) -> Result<EvaluatedCmd, 
             ENV_PREFIX,
             |s| {
                 let cmd = format!("echo ${s}");
-                execute_and_get(cmd.as_str(), || {})
+                execute_and_get(cmd.as_str(), "Failed to get env variable")
             },
             |match_str, s| {
                 original_cmd = original_cmd.replace(match_str, s.as_str());
                 modified_cmd = modified_cmd.replace(match_str, s.as_str());
-            },
-            |s| Some(AppErrors::EnvNotFound(s)),
+            }
         )?;
 
         handle_capture(
             &cap,
             VARS,
             VARS_PREFIX,
-            |s| get_var(app, s.as_str()) ,
+            |s| get_var(app, s.as_str()),
             |match_str, s| {
                 original_cmd = original_cmd.replace(match_str, s.as_str());
                 modified_cmd = modified_cmd.replace(match_str, s.as_str());
-            },
-            |s| Some(AppErrors::VarNotFound(s)),
+            }
         )?;
 
         handle_capture(
             &cap,
             SECRETS,
             SECRETS_PREFIX,
-            |s| get_secret(app, s.as_str()) ,
+            |s| get_secret(app, s.as_str()),
             |match_str, s| {
                 original_cmd = original_cmd.replace(match_str, s.as_str());
                 modified_cmd = modified_cmd.replace(match_str, MODIFIED_SECRET);
-            },
-            |s| Some(AppErrors::SecretNotFound(s)),
+            }
         )?;
 
         handle_capture(
             &cap,
             PARAMS,
             PARAM_PREFIX,
-            |s| Some(s) ,
+            |s| Ok(s) ,
             |_match_str, s| parameters.push(s),
-            |_s| None,
         )?;
     }
 
@@ -86,71 +84,84 @@ pub fn handle_capture(
     cap: &Captures,
     name: &str,
     prefix: &str,
-    getter: impl Fn(String) -> Option<String>,
+    getter: impl Fn(String) -> Result<String, AppErrors>,
     mut transformer: impl FnMut(&str, String) -> (),
-    err: impl Fn(String) -> Option<AppErrors>,
 ) -> Result<(), AppErrors> {
     if let Some(m) = cap.name(name) {
         let match_str = m.as_str().trim();
         let var_name = match_str.replace(prefix, "");
-        if let Some(s) = getter(var_name.to_string().replace(SUFFIX, "")) {
-            transformer(match_str, s);
-        } else {
-            if let Some(e) = err(var_name){
-                return Err(e);
-            }
-        }
+        let s = getter(var_name.to_string().replace(SUFFIX, ""))?;
+        transformer(match_str, s);
     }
 
     Ok(())
 }
 
-pub fn get_var(app: &AppHandle, var_name: &str) -> Option<String> {
+pub fn get_var(app: &AppHandle, var_name: &str) ->  Result<String, AppErrors> {
     let state = app.state::<AppState>();
     let vars = &state.lock().unwrap().config.variables;
-    vars.get(var_name).cloned()
+    match vars.get(var_name) {
+        Some(var) => Ok(var.clone()),
+        None => Err(AppErrors::VarNotFound(var_name.to_string()))
+    }
 }
 
-pub fn get_secret(app: &AppHandle, var_name: &str) -> Option<String> {
+pub fn get_secret(app: &AppHandle, var_name: &str) -> Result<String, AppErrors> {
     let state = app.state::<AppState>();
     let secrets = &state.lock().unwrap().config.secrets;
-    secrets.get(var_name).cloned()
-}
-
-pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), on_error: impl Fn()) {
-    let output = tauri::async_runtime::block_on(async move {
-        Command::new(PROGRAM_NAME)
-            .arg("-c")
-            .arg(cmd)
-            .output()
-            .unwrap()
-    });
-
-    if output.status.success() {
-        handler(output);
-    } else {
-        on_error();
+    match secrets.get(var_name) { 
+        Some(secret) => Ok(secret.clone()),
+        None => Err(AppErrors::SecretNotFound(var_name.to_string()))
     }
+    
 }
 
-pub fn execute_and_get(cmd: &str, on_error: impl Fn()) -> Option<String> {
-    let output = tauri::async_runtime::block_on(async move {
+pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), err_msg: &str) -> Result<(), AppErrors> {
+    let output: io::Result<Output> = tauri::async_runtime::block_on(async move {
         Command::new(PROGRAM_NAME)
             .arg("-c")
             .arg(cmd)
             .output()
-            .unwrap()
     });
 
-    if output.status.success() {
-        let value = String::from_utf8(output.stdout).unwrap().trim().to_string();
-        if value.is_empty() {
-            None
-        } else {
-            Some(value)
+    match output {
+        Ok(output) => {
+            let status = output.status;
+            if status.success() {
+                handler(output);
+                Ok(())  
+            } else {
+                Err(CommandFailed(err_msg.to_string()))
+            }
+        },
+        Err(e) => {
+            Err(FailedToExecuteCommand(format!(" Failed to execute command {} \n ({e})", cmd.to_string())))
         }
-    } else {
-        on_error();
-        None
     }
+    
+}
+
+pub fn execute_and_get(cmd: &str, err_msg: &str) -> Result<String, AppErrors> {
+    let output = tauri::async_runtime::block_on(async move {
+        Command::new(PROGRAM_NAME)
+            .arg("-c")
+            .arg(cmd)
+            .output()
+    });
+
+    match output {
+        Ok(output) => {
+            let status = output.status;
+            if status.success() {
+                let value = String::from_utf8(output.stdout)?.trim().to_string();
+                Ok(value) 
+            } else {
+                Err(CommandFailed(err_msg.to_string()))
+            }
+        },
+        Err(e) => {
+            Err(FailedToExecuteCommand(format!(" Failed to execute command {}, ({e})", cmd.to_string())))
+        }
+    }
+    
 }

@@ -4,15 +4,15 @@ use tauri::menu::{Menu, PredefinedMenuItem};
 use tauri::{AppHandle, Manager, Wry};
 
 pub mod menu_items {
+    use crate::models::config::AppConfig;
     use crate::models::errors::AppErrors;
     use crate::models::state::AppState;
     use crate::utils::config::get_config_icons_path;
     use std::fmt::Display;
     use tauri::image::Image;
-    use tauri::menu::{IconMenuItem, Menu, MenuId, MenuItem, MenuItemKind, Submenu, SubmenuBuilder};
-    use tauri::{AppHandle, Error, Manager, Wry};
+    use tauri::menu::{IconMenuItem, Menu, MenuId, MenuItem, Submenu, SubmenuBuilder};
     use tauri::Error::UnknownPath;
-    use crate::models::config::AppConfig;
+    use tauri::{AppHandle, Manager, Wry};
 
     pub mod id_values {
         pub const QUIT: &str = "Quit";
@@ -152,7 +152,7 @@ pub mod menu_items {
     pub fn navigations(app: &AppHandle, config: Option<AppConfig>) -> tauri::Result<Submenu<Wry>> {
         let sb =
             SubmenuBuilder::with_id(app, MenuItemIds::Navigations, texts::NAVIGATIONS).build()?;
-        
+
         let navigations = if let Some(config) = config {
             config.navigations
         } else {
@@ -160,7 +160,7 @@ pub mod menu_items {
             let state_lock = state.lock().unwrap();
             state_lock.config.navigations.clone()
         };
-        
+
         for nav in navigations.into_iter() {
             let name = nav.name;
             let url = nav.url;
@@ -176,13 +176,13 @@ pub mod menu_items {
             };
 
             if let Ok(item) = navigation_icon_item(app, name, url, icon) {
-                sb.append(&item).expect("Failed to add");
+                sb.append(&item)?;
             }
         }
 
         Ok(sb)
     }
-    
+
     fn navigation_icon_item(
         app: &AppHandle,
         name: String,
@@ -204,7 +204,6 @@ pub mod menu_items {
 
     pub fn commands(app: &AppHandle, config: Option<AppConfig>) -> tauri::Result<Submenu<Wry>> {
         let sb = SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS).build()?;
-        let state = app.state::<AppState>();
 
         let commands = if let Some(config) = config {
             config.commands
@@ -213,16 +212,14 @@ pub mod menu_items {
             let state_lock = state.lock().unwrap();
             state_lock.config.commands.clone()
         };
-        
-       commands
-            .into_iter()
-            .for_each(|command| {
-                let name = command.name;
-                let cmd = command.cmd;
-                if let Ok(item) = command_item(app, name, cmd) {
-                    sb.append(&item).expect("");
-                }
-            });
+
+        for command in commands.into_iter() {
+            let name = command.name;
+            let cmd = command.cmd;
+            if let Ok(item) = command_item(app, name, cmd) {
+                sb.append(&item)?;
+            }
+        }
 
         Ok(sb)
     }
@@ -268,8 +265,6 @@ pub mod menu_items {
         )
     }
 
-    
-    
     pub fn remove_show_hide_view_item(menu: &Menu<Wry>) -> tauri::Result<()> {
         let items = menu.items()?;
 
@@ -286,25 +281,28 @@ pub mod menu_items {
         Ok(())
     }
 
-    fn remove_items(menu: &Menu<Wry>, id_value: &str) -> tauri::Result<usize> {
-        let items = menu.items()?;
+    fn remove_items(menu: &Menu<Wry>, id_value: &str) -> Result<usize, AppErrors> {
+        let items = menu
+            .items()
+            .map_err(|_| AppErrors::FailedToRetrieveMenuItems)?;
         if let Some(p) = items.iter().position(|item| {
             let menu_id = item.id();
             menu_id.0.as_str() == id_value
-        }){
+        }) {
             let item = items.get(p).unwrap();
-            menu.remove(item)?;
+            menu.remove(item)
+                .map_err(|_| AppErrors::FailedToRemoveTrayMenuItem(id_value.to_string()))?;
             Ok(p)
         } else {
             Ok(0)
         }
     }
-    
-    pub fn remove_navigation_items(menu: &Menu<Wry>) -> tauri::Result<usize> {
+
+    pub fn remove_navigation_items(menu: &Menu<Wry>) -> Result<usize, AppErrors> {
         remove_items(menu, id_values::NAVIGATIONS)
     }
 
-    pub fn remove_command_items(menu: &Menu<Wry>) -> tauri::Result<usize> {
+    pub fn remove_command_items(menu: &Menu<Wry>) -> Result<usize, AppErrors> {
         remove_items(menu, id_values::COMMANDS)
     }
 }
