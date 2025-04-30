@@ -35,19 +35,19 @@ pub mod menu_items {
     }
 
     mod texts {
-        pub const QUIT: &str = "Close app";
+        pub const QUIT: &str = "📴 Close app";
 
-        pub const CONFIG: &str = "Open configuration";
+        pub const CONFIG: &str = "⚙️ Open configuration";
 
-        pub const RELOAD_CONFIG: &str = "Reload configuration";
+        pub const RELOAD_CONFIG: &str = "🔄 Reload configuration";
 
-        pub const NAVIGATIONS: &str = "Navigate to ... ";
+        pub const NAVIGATIONS: &str = "📂 Navigations ";
 
-        pub const COMMANDS: &str = "Execute cmd ...";
+        pub const COMMANDS: &str = "📂 Commands ";
+        
+        pub const SHOW_VIEW: &str = "👀 Show the view";
 
-        pub const SHOW_VIEW: &str = "Show the view";
-
-        pub const HIDE_VIEW: &str = "Hide the view";
+        pub const HIDE_VIEW: &str = "🙈 Hide the view";
     }
 
     #[derive(PartialEq, PartialOrd)]
@@ -125,26 +125,23 @@ pub mod menu_items {
         MenuItem::with_id(app, MenuItemIds::Quit, texts::QUIT, true, None::<&str>)
     }
 
-    pub fn config(app: &AppHandle) -> tauri::Result<IconMenuItem<Wry>> {
-        let icon = Image::from_bytes(include_bytes!("../../icons/config.png")).ok();
-        IconMenuItem::with_id(
+    pub fn config(app: &AppHandle) -> tauri::Result<MenuItem<Wry>> {
+        MenuItem::with_id(
             app,
             MenuItemIds::Config,
             texts::CONFIG,
             true,
-            icon,
+           
             None::<&str>,
         )
     }
 
-    pub fn reload(app: &AppHandle) -> tauri::Result<IconMenuItem<Wry>> {
-        let icon = Image::from_bytes(include_bytes!("../../icons/reload.png")).ok();
-        IconMenuItem::with_id(
+    pub fn reload(app: &AppHandle) -> tauri::Result<MenuItem<Wry>> {
+        MenuItem::with_id(
             app,
             MenuItemIds::ReloadConfig,
             texts::RELOAD_CONFIG,
             true,
-            icon,
             None::<&str>,
         )
     }
@@ -203,7 +200,8 @@ pub mod menu_items {
     }
 
     pub fn commands(app: &AppHandle, config: Option<AppConfig>) -> tauri::Result<Submenu<Wry>> {
-        let sb = SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS).build()?;
+        let sb = SubmenuBuilder::with_id(app, MenuItemIds::Commands, texts::COMMANDS)
+            .build()?;
 
         let commands = if let Some(config) = config {
             config.commands

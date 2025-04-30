@@ -34,7 +34,7 @@ pub fn evaluate_cmd_value(app: &AppHandle, cmd: String) -> Result<EvaluatedCmd, 
             ENV_PREFIX,
             |s| {
                 let cmd = format!("echo ${s}");
-                execute_and_get(cmd.as_str(), "Failed to get env variable")
+                execute_and_get(cmd.as_str(), "Failed to get env variable", AppErrors::EnvNotFound(s.as_str().to_string()))
             },
             |match_str, s| {
                 original_cmd = original_cmd.replace(match_str, s.as_str());
@@ -109,11 +109,11 @@ pub fn get_var(app: &AppHandle, var_name: &str) ->  Result<String, AppErrors> {
 pub fn get_secret(app: &AppHandle, var_name: &str) -> Result<String, AppErrors> {
     let state = app.state::<AppState>();
     let secrets = &state.lock().unwrap().config.secrets;
-    match secrets.get(var_name) { 
+    match secrets.get(var_name) {
         Some(secret) => Ok(secret.clone()),
         None => Err(AppErrors::SecretNotFound(var_name.to_string()))
     }
-    
+
 }
 
 pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), err_msg: &str) -> Result<(), AppErrors> {
@@ -129,7 +129,7 @@ pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), err_msg: &str) -> Result
             let status = output.status;
             if status.success() {
                 handler(output);
-                Ok(())  
+                Ok(())
             } else {
                 Err(CommandFailed(err_msg.to_string()))
             }
@@ -138,10 +138,10 @@ pub fn execute_cmd(cmd: &str, handler: impl Fn(Output), err_msg: &str) -> Result
             Err(FailedToExecuteCommand(format!(" Failed to execute command {} \n ({e})", cmd.to_string())))
         }
     }
-    
+
 }
 
-pub fn execute_and_get(cmd: &str, err_msg: &str) -> Result<String, AppErrors> {
+pub fn execute_and_get(cmd: &str, err_msg: &str, empty_output_err: AppErrors) -> Result<String, AppErrors> {
     let output = tauri::async_runtime::block_on(async move {
         Command::new(PROGRAM_NAME)
             .arg("-c")
@@ -154,7 +154,10 @@ pub fn execute_and_get(cmd: &str, err_msg: &str) -> Result<String, AppErrors> {
             let status = output.status;
             if status.success() {
                 let value = String::from_utf8(output.stdout)?.trim().to_string();
-                Ok(value) 
+                if value.is_empty() {
+                    return Err(empty_output_err);
+                }
+                Ok(value)
             } else {
                 Err(CommandFailed(err_msg.to_string()))
             }
@@ -163,5 +166,5 @@ pub fn execute_and_get(cmd: &str, err_msg: &str) -> Result<String, AppErrors> {
             Err(FailedToExecuteCommand(format!(" Failed to execute command {}, ({e})", cmd.to_string())))
         }
     }
-    
+
 }

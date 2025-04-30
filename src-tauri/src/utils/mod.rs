@@ -21,7 +21,7 @@ pub fn show_main_view(app: &AppHandle) -> Result<(), AppErrors> {
 
 pub fn hide_main_view(app: &AppHandle) -> Result<(), AppErrors> {
     let window = app.get_webview_window("main").unwrap();
-    window.hide().map_err(|e| AppErrors::FailedToShowApp(e))
+    window.hide().map_err(|e| AppErrors::FailedToHideApp(e))
 }
 
 pub fn close_main_view(app: &AppHandle)  -> Result<(), AppErrors>{

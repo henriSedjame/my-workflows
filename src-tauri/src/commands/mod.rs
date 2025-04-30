@@ -100,7 +100,7 @@ pub async fn execute_command(
     });
 
     tauri::async_runtime::spawn(async move {
-        update_tray_menu(&app);
+        update_tray_menu(&app).unwrap();
     });
 
     Ok(true)
@@ -143,9 +143,9 @@ pub fn hide_view(app: AppHandle, state: State<'_, AppState>, open_tabs: bool) ->
     if !open_tabs {
         state_lock.view_visible = false;
     }
-    hide_main_view(&app);
+    hide_main_view(&app).unwrap();
     tauri::async_runtime::spawn(async move {
-        update_tray_menu(&app);
+        update_tray_menu(&app).unwrap();
     });
     Ok(())
 }

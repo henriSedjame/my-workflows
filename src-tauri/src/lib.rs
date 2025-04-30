@@ -35,7 +35,7 @@ pub fn run() {
 
             let app_handle = app.handle();
 
-            hide_main_view(app_handle);
+            hide_main_view(app_handle)?;
 
             /* Add initial state */
             {
