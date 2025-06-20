@@ -8,9 +8,7 @@ use crate::utils::cmd::{evaluate_cmd_value, execute_cmd};
 use crate::utils::config::get_config_dir_path;
 
 use crate::models::errors::AppErrors;
-use crate::utils::{
-    close_main_view, hide_main_view, show_main_view, update_config_menu, update_tray_menu,
-};
+use crate::utils::{close_main_view, hide_main_view, main_view_visible, show_main_view, update_config_menu, update_tray_menu};
 use tauri::image::Image;
 use tauri::menu::MenuEvent;
 use tauri::tray::{TrayIcon, TrayIconBuilder};
@@ -69,22 +67,23 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
                         update_tray_menu(&app)
                     }
                 ),
-                MenuItemIds::Navigations => {}
+                MenuItemIds::Navigations => {},
                 MenuItemIds::Open { id: _, url } => handle(
                     app,
                    format!("Open {}", url),
                     || {
                         open::that(url.clone()).map_err(|_| AppErrors::FailedToOpenUrl(url.clone()))
                     }
-                )
-                ,
-                MenuItemIds::Commands => {}
+                ),
+                MenuItemIds::Commands => {},
+                MenuItemIds::CommandGroup(_) => {},
                 MenuItemIds::Cmd { id, cmd } => handle(
                     app,
                     String::from("Execute Command"), 
                     || {
                         let cmd = evaluate_cmd_value(app, cmd.clone())?;
                         show_main_view(app)?;
+                        println!("{}", main_view_visible(app));
                         emit_event(
                             app,
                             CommandRequested {

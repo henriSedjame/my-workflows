@@ -8,7 +8,7 @@ pub struct AppConfig {
     pub secrets: HashMap<String, String>,
     pub path: String,
     pub navigations: Vec<Navigation>,
-    pub commands: Vec<Cmd>,
+    pub commands: Vec<Command>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -22,4 +22,17 @@ pub struct Navigation {
 pub struct Cmd {
     pub name: String,
     pub cmd: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CmdGrp {
+    pub name: String,
+    pub commands: Vec<Cmd>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum Command {
+    Simple(Cmd),
+    Group(CmdGrp),
 }

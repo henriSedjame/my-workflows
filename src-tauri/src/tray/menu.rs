@@ -13,6 +13,7 @@ pub mod menu_items {
     use tauri::menu::{IconMenuItem, Menu, MenuId, MenuItem, Submenu, SubmenuBuilder};
     use tauri::Error::UnknownPath;
     use tauri::{AppHandle, Manager, Wry};
+    use crate::models::config::Command::{Group, Simple};
 
     pub mod id_values {
         pub const QUIT: &str = "Quit";
@@ -24,6 +25,8 @@ pub mod menu_items {
         pub const NAVIGATIONS: &str = "Navigations";
 
         pub const COMMANDS: &str = "Commands";
+        
+        pub const COMMAND_GROUP: &str = "CommandGroup_";
 
         pub const OPEN: &str = "Open_";
         pub const CMD: &str = "Cmd_";
@@ -60,6 +63,7 @@ pub mod menu_items {
         ReloadConfig,
         Navigations,
         Commands,
+        CommandGroup(String),
         ShowView,
         HideView,
         Open { id: String, url: String },
@@ -74,6 +78,7 @@ pub mod menu_items {
                 MenuItemIds::ReloadConfig => write!(f, "{}", id_values::RELOAD)?,
                 MenuItemIds::Navigations => write!(f, "{}", id_values::NAVIGATIONS)?,
                 MenuItemIds::Commands => write!(f, "{}", id_values::COMMANDS)?,
+                MenuItemIds::CommandGroup(name) => write!(f, "{}{}" , id_values::COMMAND_GROUP, name)?,
                 MenuItemIds::ShowView => write!(f, "{}", id_values::SHOW_VIEW)?,
                 MenuItemIds::HideView => write!(f, "{}", id_values::HIDE_VIEW)?,
                 MenuItemIds::Open { id, url } => {
@@ -113,7 +118,11 @@ pub mod menu_items {
                             id: cmd_id.replace(id_values::CMD, ""),
                             cmd,
                         }
-                    } else {
+                    } else if id.starts_with(id_values::COMMAND_GROUP) {
+                        let group_name = id.replace(id_values::COMMAND_GROUP, "");
+                        MenuItemIds::CommandGroup(group_name)
+                    }
+                    else {
                         panic!("Invalid menu item id")
                     }
                 }
@@ -211,14 +220,41 @@ pub mod menu_items {
             state_lock.config.commands.clone()
         };
 
-        for command in commands.into_iter() {
-            let name = command.name;
-            let cmd = command.cmd;
-            if let Ok(item) = command_item(app, name, cmd) {
-                sb.append(&item)?;
+        let mut simple_commands = Vec::new();
+        let mut group_commands = Vec::new();
+        
+        for cmd in commands.into_iter() {
+            
+            match cmd {
+                Simple(cmd) => {
+                    if let Ok(item) = command_item(app, cmd.name, cmd.cmd) {
+                        simple_commands.push(item);
+                    }
+                },
+                Group(group) => {
+                    let sbg = SubmenuBuilder::with_id(app, MenuItemIds::CommandGroup(group.name.clone()), group.name)
+                        .build()?;
+                    
+                    for cmd in group.commands.into_iter() {
+                        if let Ok(item) = command_item(app, cmd.name, cmd.cmd) {
+                            sbg.append(&item)?;
+                        }
+                    }
+                    
+                    group_commands.push(sbg);
+                }
             }
+            
         }
 
+        for sbg in group_commands.into_iter() {
+            sb.append(&sbg)?;
+        }
+        
+        for item in simple_commands.into_iter() {
+            sb.append(&item)?;
+        }
+        
         Ok(sb)
     }
 
