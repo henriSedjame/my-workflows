@@ -4,7 +4,7 @@ use tauri::menu::{Menu, PredefinedMenuItem};
 use tauri::{AppHandle, Manager, Wry};
 
 pub mod menu_items {
-    use crate::models::config::AppConfig;
+    use crate::models::config::{AppConfig, Command};
     use crate::models::errors::AppErrors;
     use crate::models::state::AppState;
     use crate::utils::config::get_config_icons_path;
@@ -219,12 +219,19 @@ pub mod menu_items {
             let state_lock = state.lock().unwrap();
             state_lock.config.commands.clone()
         };
-
-        let mut simple_commands = Vec::new();
-        let mut group_commands = Vec::new();
         
+        add_commands(app, &sb, None, commands)?;
+        
+        Ok(sb)
+    }
+
+    pub fn add_commands(app: &AppHandle,  parent: &Submenu<Wry>, parent_group_name: Option<String>, commands: Vec<Command>) -> tauri::Result<()> {
+        let mut simple_commands = Vec::new();
+
+        let mut group_commands = Vec::new();
+
         for cmd in commands.into_iter() {
-            
+
             match cmd {
                 Simple(cmd) => {
                     if let Ok(item) = command_item(app, cmd.name, cmd.cmd) {
@@ -232,30 +239,32 @@ pub mod menu_items {
                     }
                 },
                 Group(group) => {
-                    let sbg = SubmenuBuilder::with_id(app, MenuItemIds::CommandGroup(group.name.clone()), group.name)
+                    
+                    let sbg_name = match parent_group_name.as_ref() {
+                        Some(pgn) => format!("{pgn}_{}", group.name.clone()),
+                        None => group.name.clone(),
+                    };
+                    
+                    let sbg = SubmenuBuilder::with_id(app, MenuItemIds::CommandGroup(sbg_name), format!("📂 {}",group.name.clone()))
                         .build()?;
-                    
-                    for cmd in group.commands.into_iter() {
-                        if let Ok(item) = command_item(app, cmd.name, cmd.cmd) {
-                            sbg.append(&item)?;
-                        }
-                    }
-                    
+
+                    add_commands(app, &sbg, Some(group.name), group.commands)?;
+
                     group_commands.push(sbg);
                 }
             }
-            
+
         }
 
         for sbg in group_commands.into_iter() {
-            sb.append(&sbg)?;
+            parent.append(&sbg)?;
         }
-        
+
         for item in simple_commands.into_iter() {
-            sb.append(&item)?;
+            parent.append(&item)?;
         }
         
-        Ok(sb)
+        Ok(())
     }
 
     fn command_item(

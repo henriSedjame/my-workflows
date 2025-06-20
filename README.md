@@ -53,20 +53,98 @@ Le fichier `📄 config.json` est le fichier de configuration. La structure de c
 
 Le dossier `📂 icons` contient les icons utilisées pour les [navigations](#navigations).
 
+
 <br>
 
-Petit tour d'horizon sur les différents propriétés de la configuration : 
+##### 👀 _Petit tour d'horizon sur les différentes propriétés de la configuration_ : 
 
-* ### <span id="path">🛤️ Path
-
+<details>
+<summary>  🛤️  <strong> Path  </strong></summary>
+    
 C'est la valeur de votre variable d'environnement `$PATH`. Il est utilisé lors de l'exécution des commandes. 
 
-En effet, **_Flows_** n'a pas accès à vos fichiers `.rc`, il n'a donc pas connaissance de votre `$PATH` et ne saurait donc pas retrouver vos différentes commandes. 
+En effet, **_Flows_** n'a pas accès à vos fichiers `.rc`, il n'a donc pas connaissance de votre `$PATH` et ne saurait donc pas retrouver vos différentes commandes.
 
-* ### <span id="variables">Variables
+</details>
 
-* ### <span id="secrets"> 🔐Secrets
+<br>
 
-* ### <span id="navigations">Navigations
+<details>
+<summary>  🛢️<strong id="variables"> Variables </strong> </summary>
 
-* ### <span id="commands">Commands
+Les variables sont des valeurs nommées et réutilisables dans les [commands](#commands).
+
+Pour déclarer une variable, il faut lui donner un nom et une valeur 👇
+
+```json
+ {
+  "variables": {
+    "VAR_1" : "value1"
+  }
+}
+```
+
+Pour utiliser une variable, il faut l'encapsuler le nom de la variable dans un `${}`
+
+```
+  echo ${VAR_1} 
+ ```
+</details>
+
+<br>
+
+<details>
+<summary>  🤫 <strong>Secrets </strong>  </summary>
+
+Les <span style="color : gray">_secrets_</span> sont des [variables](#variables) dont la valeur n'est pas affichée 
+à l'écran lors de l'exécution de la commande.
+
+Ils sont déclarés dons la partie `secrets` de la configuration et sont utilisés de la même manière que les [variables](#variables).
+
+</details>
+
+<br>
+
+<details>
+<summary>   🌎 <strong id="navigations">Navigations</strong> </summary>
+
+Le bloc `navigations` contient les **_actions de navigation_** vers une page web, un dossier ou un fichier.
+
+Une action de navigation est modélisée comme suit :
+
+```
+- name : String
+- url : String
+- icon : String (optionel)
+```
+ - **name** : 
+    
+   C'est le nom de l'action.
+
+
+ - **url** :
+    
+    C'est l'url ou le chemin vers lequel la navigation se fait.
+
+
+ - **icon** : 
+
+    C'est l'icône représentant l'action. 
+
+    C'est une image placée dans le dossier  `📂 .wfapp/icons`.
+    
+    La valeur doit contenir l'extension du fichier :  `img.png` par exemple.
+
+🎉 **Le résultat en image** 👇 
+
+<div style="display: flex; justify-content: start; width: auto; height: auto; padding-top: 15px;" >
+   <img src="./assets/navigations.png" alt="" width="300" height="267"/>
+</div>
+
+</details>
+<br>
+
+<details>
+<summary>   🎬 <strong id="commands">Commands</strong> </summary>
+</details>
+<br>

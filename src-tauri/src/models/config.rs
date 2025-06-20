@@ -27,7 +27,7 @@ pub struct Cmd {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CmdGrp {
     pub name: String,
-    pub commands: Vec<Cmd>,
+    pub commands: Vec<Command>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
