@@ -29,7 +29,7 @@ pub fn run() {
             }
 
             /* Hide app and dock icon */
-            {
+            #[cfg(target_os = "macos")]{
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
 
@@ -42,7 +42,9 @@ pub fn run() {
                 match AppStateInner::new() {
                     Ok(inner) => {
                         app.manage(Mutex::new(inner));
-                        tray::create(app_handle)?;
+                        #[cfg(target_os = "macos")]{
+                            tray::create(app_handle)?;
+                        }
                         Ok(())
                     }
                     Err(e) => {
