@@ -122,12 +122,14 @@ pub fn kill_command(
         let command = state_lock.running_commands.get(index).unwrap();
         
         get_children(command.pid, &sysinfo::System::new_all())?.iter().for_each(|pid| {
-            if nix::sys::signal::kill(
-                nix::unistd::Pid::from_raw(*pid as i32),
-                Some(nix::sys::signal::Signal::SIGINT),
-            ).is_err() { 
-                println!("Failed to kill {}", pid);
-            };
+            #[cfg(not(target_os = "windows"))] {
+                if nix::sys::signal::kill(
+                    nix::unistd::Pid::from_raw(*pid as i32),
+                    Some(nix::sys::signal::Signal::SIGINT),
+                ).is_err() {
+                    println!("Failed to kill {}", pid);
+                };
+            }
         });
         
         state_lock.running_commands.remove(index);
