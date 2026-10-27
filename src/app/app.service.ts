@@ -12,9 +12,7 @@ export class AppService {
     appStore = inject(AppStore)
 
     executeCommand(commandId: string, script: string, startCommandData:{label: string, value: string, parameters: string[] | undefined} | undefined = undefined) {
-
         if (startCommandData != undefined && startCommandData.parameters != undefined) {
-
             this.appStore.requestNextCommandParams(
                 commandId,
                 startCommandData.value,
@@ -23,9 +21,11 @@ export class AppService {
                 startCommandData.parameters
             )
         } else {
+
             const channel = new Channel<CommandExecutionEvent>()
 
             channel.onmessage = (message) => {
+
                 switch (message.event) {
                     case AppEvents.COMMAND_STARTED:
                         if (startCommandData == undefined) {
@@ -53,7 +53,9 @@ export class AppService {
                 commandId: commandId,
                 commandValue: script,
                 channel: channel
-            }).then(_r => {})
+            }).then(_r => {
+                console.log("Executed command: " + commandId);
+            })
         }
 
     }
