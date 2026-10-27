@@ -36,7 +36,7 @@ pub async fn execute_command(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    
+
     state_lock.view_visible = true;
 
     state_lock.running_commands.push(RunningCommand {
@@ -52,6 +52,7 @@ pub async fn execute_command(
             let stdout_lines = stdout_reader.lines();
 
             for line in stdout_lines.into_iter().flatten() {
+                println!("Line => {}", line.clone());
                 channel
                     .send(CommandProgress {
                         progress_line: line,

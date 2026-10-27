@@ -96,7 +96,7 @@ export const AppStore = signalStore(
         },
 
         newCommand(id: string, value: string, label: string, script: string) {
-
+            console.log("New command")
             const commands = store.commands()
 
             let newCommands: Command[] = [];
